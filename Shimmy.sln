@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28010.2046
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shimmy", "Shimmy\Shimmy.csproj", "{0F9D2230-F608-4AC7-ACED-39EA71682881}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShimmyTests", "ShimmyTests\ShimmyTests.csproj", "{42FBD032-3BBF-409A-A360-C5413D250601}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{0F9D2230-F608-4AC7-ACED-39EA71682881}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F9D2230-F608-4AC7-ACED-39EA71682881}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F9D2230-F608-4AC7-ACED-39EA71682881}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42FBD032-3BBF-409A-A360-C5413D250601}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42FBD032-3BBF-409A-A360-C5413D250601}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42FBD032-3BBF-409A-A360-C5413D250601}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42FBD032-3BBF-409A-A360-C5413D250601}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
