@@ -29,7 +29,9 @@ namespace Shimmy
         private void GenerateShimmedMethods()
         {
             var methods = GetMethodCallsInEntryPoint(_entryPoint);
-            _shimmedMethods = methods.Select(m => new ShimmedMethod(m)).ToList();
+            _shimmedMethods = methods.Select(m => {
+                return GetShimmedMethod(m);
+            }).ToList();
         }
 
         private Shim[] GetShims()
@@ -45,6 +47,14 @@ namespace Shimmy
             // todo: constructors
             return memberInfos.Where(mi => mi.MemberType == MemberTypes.Method)
                 .Select(mi => mi as MethodInfo).ToList();
+        }
+
+        private ShimmedMethod GetShimmedMethod(MethodInfo m)
+        {
+            var type = m.ReturnType;
+            var genericType = m.ReturnType == typeof(void) ? typeof(object) : m.ReturnType;
+            var genericShimmedMethod = typeof(ShimmedMethod<>).MakeGenericType(new Type[] { genericType });
+            return (ShimmedMethod)Activator.CreateInstance(genericShimmedMethod, new object[] { m });
         }
     }
 }

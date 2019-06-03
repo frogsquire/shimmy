@@ -3,12 +3,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace Shimmy
 {
-    internal class ShimmedMethod
+    internal abstract class ShimmedMethod
     {
+        public MethodInfo Method { get; private set; }
+
+        public List<ShimmedMethodCall> CallResults { get; private set; }
+
+        public Shim Shim { get; private set; }
+
         public ShimmedMethod(MethodInfo method)
         {
             Method = method ?? throw new ArgumentNullException(nameof(method));
@@ -17,29 +22,44 @@ namespace Shimmy
             CallResults = new List<ShimmedMethodCall>();
         }
 
-        public MethodInfo Method { get; private set; }
+        protected abstract Shim GenerateShim();
+    }
 
-        public List<ShimmedMethodCall> CallResults { get; private set; }
+    internal class ShimmedMethod<T> : ShimmedMethod
+    {
+        public ShimmedMethod(MethodInfo method) : base(method)
+        {
+        }
 
-        public Shim Shim { get; private set; }
-
-        private Shim GenerateShim()
+        protected override Shim GenerateShim()
         {
             if (Method.IsStatic)
             {
-
-                return Shim.Replace(GenerateExpression()).With(() =>
-                {
-                    // todo: parameters (will have to make a method to do this)
-                    CallResults.Add(new ShimmedMethodCall(new object[] { }));
-                });
+                // todo: object standing in for void here
+                if (typeof(T) == typeof(object))
+                    return Shim.Replace(GenerateVoidCallExpression()).With(() => AddCallResult());
+                else
+                    return Shim.Replace(GenerateCallExpression()).With(GetShimActionWithReturn());
             }
 
             // todo: implement other method types
             throw new NotImplementedException();
         }
 
-        private Expression<Action> GenerateExpression()
+
+        private Expression<Action> GenerateVoidCallExpression()
+        {
+            var expressionParameters = GenerateExpressionParameters();
+            return Expression.Lambda<Action>(Expression.Call(null, Method), expressionParameters);
+        }
+
+        private Expression<Func<T>> GenerateCallExpression()
+        {
+            var expressionParameters = GenerateExpressionParameters();
+            return Expression.Lambda<Func<T>>(Expression.Call(null, Method), expressionParameters);
+        }
+
+        private ParameterExpression[] GenerateExpressionParameters()
         {
             // todo: parameter mocking?
             var parameters = Method.GetParameters();
@@ -47,13 +67,24 @@ namespace Shimmy
 
             for (var i = 0; i < parameters.Length; i++)
             {
-                expressionParameters[i] = 
+                expressionParameters[i] =
                     Expression.Parameter(parameters[i].ParameterType, parameters[i].Name);
             }
 
-            // todo: handle non-static methods
-            var methodCall = Expression.Call(null, Method);
-            return Expression.Lambda<Action>(methodCall, expressionParameters);
+            return expressionParameters;
         }
+
+        private Func<T> GetShimActionWithReturn()
+        {
+            return () => LogAndReturnDefault();
+        }
+
+        private T LogAndReturnDefault()
+        {
+            AddCallResult();
+            return default(T);
+        }
+
+        private void AddCallResult() => CallResults.Add(new ShimmedMethodCall(new object[] { }));
     }
 }
