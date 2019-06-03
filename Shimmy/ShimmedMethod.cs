@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Shimmy
 {
-    internal abstract class ShimmedMethod
+    internal class ShimmedMethod
     {
         public MethodInfo Method { get; private set; }
 
@@ -22,30 +22,19 @@ namespace Shimmy
             CallResults = new List<ShimmedMethodCall>();
         }
 
-        protected abstract Shim GenerateShim();
-    }
-
-    internal class ShimmedMethod<T> : ShimmedMethod
-    {
-        public ShimmedMethod(MethodInfo method) : base(method)
-        {
-        }
-
-        protected override Shim GenerateShim()
+        protected virtual Shim GenerateShim()
         {
             if (Method.IsStatic)
             {
-                // todo: object standing in for void here
-                if (typeof(T) == typeof(object))
-                    return Shim.Replace(GenerateVoidCallExpression()).With(() => AddCallResult());
-                else
-                    return Shim.Replace(GenerateCallExpression()).With(GetShimActionWithReturn());
+                return Shim.Replace(GenerateVoidCallExpression()).With(() => AddCallResult());
             }
 
             // todo: implement other method types
             throw new NotImplementedException();
+
         }
 
+        protected void AddCallResult() => CallResults.Add(new ShimmedMethodCall(new object[] { }));
 
         private Expression<Action> GenerateVoidCallExpression()
         {
@@ -53,13 +42,7 @@ namespace Shimmy
             return Expression.Lambda<Action>(Expression.Call(null, Method), expressionParameters);
         }
 
-        private Expression<Func<T>> GenerateCallExpression()
-        {
-            var expressionParameters = GenerateExpressionParameters();
-            return Expression.Lambda<Func<T>>(Expression.Call(null, Method), expressionParameters);
-        }
-
-        private ParameterExpression[] GenerateExpressionParameters()
+        protected ParameterExpression[] GenerateExpressionParameters()
         {
             // todo: parameter mocking?
             var parameters = Method.GetParameters();
@@ -73,6 +56,30 @@ namespace Shimmy
 
             return expressionParameters;
         }
+    }
+
+    internal class ShimmedMethod<T> : ShimmedMethod
+    {
+        public ShimmedMethod(MethodInfo method) : base(method)
+        {
+        }
+
+        protected override Shim GenerateShim()
+        {
+            if (Method.IsStatic)
+            {
+                return Shim.Replace(GenerateCallExpression()).With(GetShimActionWithReturn());
+            }
+
+            // todo: implement other method types
+            throw new NotImplementedException();
+        }
+
+        private Expression<Func<T>> GenerateCallExpression()
+        {
+            var expressionParameters = GenerateExpressionParameters();
+            return Expression.Lambda<Func<T>>(Expression.Call(null, Method), expressionParameters);
+        }
 
         private Func<T> GetShimActionWithReturn()
         {
@@ -84,7 +91,5 @@ namespace Shimmy
             AddCallResult();
             return default(T);
         }
-
-        private void AddCallResult() => CallResults.Add(new ShimmedMethodCall(new object[] { }));
     }
 }

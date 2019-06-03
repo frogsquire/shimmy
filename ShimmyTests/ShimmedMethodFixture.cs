@@ -47,7 +47,7 @@ namespace ShimmyTests
         [TestMethod]
         public void ShimmedMethod_Generates_From_Empty_Static_Method_Call()
         {
-            var shimmedMethod = new ShimmedMethod<object>(typeof(TestClass).GetMethod("EmptyMethod"));
+            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("EmptyMethod"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
