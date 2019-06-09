@@ -1,1 +1,1 @@
-﻿[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("ShimmyTests")]
+﻿[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Shimmy.Tests")]

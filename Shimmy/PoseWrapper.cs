@@ -43,7 +43,8 @@ namespace Shimmy
         {
             var instructions = entryPoint.GetMethodInfo().GetInstructions();
             var memberInfos = instructions.Where(i => i.OpCode.OperandType == OperandType.InlineMethod)
-                .Select(i => i.Operand as MemberInfo);
+                .Select(i => i.Operand as MemberInfo).Distinct();
+
             // todo: constructors
             return memberInfos.Where(mi => mi.MemberType == MemberTypes.Method)
                 .Select(mi => mi as MethodInfo).ToList();
@@ -52,8 +53,11 @@ namespace Shimmy
         private ShimmedMethod GetShimmedMethod(MethodInfo m)
         {
             var type = m.ReturnType;
-            var genericType = m.ReturnType == typeof(void) ? typeof(object) : m.ReturnType;
-            var genericShimmedMethod = typeof(ShimmedMethod<>).MakeGenericType(new Type[] { genericType });
+
+            if (type == typeof(void))
+                return new ShimmedMethod(m);
+
+            var genericShimmedMethod = typeof(ShimmedMethod<>).MakeGenericType(new Type[] { m.ReturnType });
             return (ShimmedMethod)Activator.CreateInstance(genericShimmedMethod, new object[] { m });
         }
     }
