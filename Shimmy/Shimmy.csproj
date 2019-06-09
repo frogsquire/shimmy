@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Pose" Version="1.2.1" />
+    <ProjectReference Include="..\Pose\Pose.csproj" />
   </ItemGroup>
 
 </Project>
