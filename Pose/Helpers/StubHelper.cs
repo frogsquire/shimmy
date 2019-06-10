@@ -22,12 +22,17 @@ namespace Pose.Helpers
 
             if (MethodBaseIsShimmyDynamic(methodBase))
             {
-                var fieldInfo = methodBase.GetType().GetField("m_owner", BindingFlags.NonPublic | BindingFlags.Instance);
-                var dynamicMethod = ((DynamicMethod)fieldInfo.GetValue(methodBase));
+                var dynamicMethod = GetDynamicMethodFromDynamicMethodBase(methodBase);
                 return GetDynamicMethodFunctionPointer(dynamicMethod);
             }
 
             return methodBase.MethodHandle.GetFunctionPointer();
+        }
+
+        public static DynamicMethod GetDynamicMethodFromDynamicMethodBase(MethodBase methodBase)
+        {
+            var fieldInfo = methodBase.GetType().GetField("m_owner", BindingFlags.NonPublic | BindingFlags.Instance);
+            return ((DynamicMethod)fieldInfo.GetValue(methodBase));            
         }
 
         // Workaround for Shimmy's dynamic methods, whose methodbases do not cast back to dynamicmethod cleanly
@@ -40,7 +45,7 @@ namespace Pose.Helpers
         public static IntPtr GetDynamicMethodFunctionPointer(DynamicMethod methodBase)
         {
             var methodDescriptor = typeof(DynamicMethod).GetMethod("GetMethodDescriptor", BindingFlags.Instance | BindingFlags.NonPublic);
-            return ((RuntimeMethodHandle)methodDescriptor.Invoke(methodBase as DynamicMethod, null)).GetFunctionPointer();
+            return ((RuntimeMethodHandle)methodDescriptor.Invoke(methodBase, null)).GetFunctionPointer();
         }
 
         public static object GetShimDelegateTarget(int index)

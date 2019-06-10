@@ -68,14 +68,13 @@ namespace Shimmy
             var arrayLocal = ilGenerator.DeclareLocal(typeof(object[]));
             ilGenerator.Emit(OpCodes.Ldc_I4, paramTypesArray.Length);
             ilGenerator.Emit(OpCodes.Newarr, typeof(object));
-            ilGenerator.Emit(OpCodes.Dup);
-            ilGenerator.Emit(OpCodes.Stloc_0);
+            ilGenerator.Emit(OpCodes.Stloc, arrayLocal);
 
             // load each parameter into the object array
             for(int i = 0; i < paramTypesArray.Length; i++)
             {
                 // set current array index
-                ilGenerator.Emit(OpCodes.Ldloc_0);
+                ilGenerator.Emit(OpCodes.Ldloc, arrayLocal);
                 ilGenerator.Emit(OpCodes.Ldc_I4, i);
 
                 // load the parameter
@@ -90,10 +89,10 @@ namespace Shimmy
             }
 
             // call the method which will save these parameters
+            ilGenerator.Emit(OpCodes.Ldloc, arrayLocal);
             ilGenerator.EmitCall(OpCodes.Call, typeof(ShimmedMethod).GetMethod("AddCallResultToShim"), null);
 
             // return
-            ilGenerator.Emit(OpCodes.Nop); // todo: is this necessary?
             ilGenerator.MarkLabel(returnLabel);
             ilGenerator.Emit(OpCodes.Ret);
 
