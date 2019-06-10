@@ -10,6 +10,7 @@ namespace Shimmy
 {
     internal class ShimmedMethod
     {
+        private Guid _libraryReferenceGuid;
         private ParameterExpression[] _expressionParameters;
 
         public const int MaximumPoseParameters = 10; 
@@ -24,8 +25,9 @@ namespace Shimmy
         {
             Method = method ?? throw new ArgumentNullException(nameof(method));
             _expressionParameters = GenerateExpressionParameters();
-            Shim = GenerateShim();
+            _libraryReferenceGuid = ShimmedMethodLibrary.Add(this);
 
+            Shim = GenerateShim();
             CallResults = new List<ShimmedMethodCall>();
         }
 
@@ -64,8 +66,14 @@ namespace Shimmy
             var ilGenerator = dynamicMethod.GetILGenerator();
             var returnLabel = ilGenerator.DefineLabel();
 
-            // create a new object array of necessary length
             var arrayLocal = ilGenerator.DeclareLocal(typeof(object[]));
+
+            // mark the current shimmed method as the one to send call results
+            // todo: for now, guid is loaded as a string for convenience of not having to pointerize
+            ilGenerator.Emit(OpCodes.Ldstr, _libraryReferenceGuid.ToString());
+            ilGenerator.EmitCall(OpCodes.Call, typeof(ShimmedMethodLibrary).GetMethod("SetRunningMethod"), null);
+
+            // create a new object array of necessary length
             ilGenerator.Emit(OpCodes.Ldc_I4, paramTypesArray.Length);
             ilGenerator.Emit(OpCodes.Newarr, typeof(object));
             ilGenerator.Emit(OpCodes.Stloc, arrayLocal);
@@ -90,7 +98,10 @@ namespace Shimmy
 
             // call the method which will save these parameters
             ilGenerator.Emit(OpCodes.Ldloc, arrayLocal);
-            ilGenerator.EmitCall(OpCodes.Call, typeof(ShimmedMethod).GetMethod("AddCallResultToShim"), null);
+            ilGenerator.EmitCall(OpCodes.Call, typeof(ShimmedMethodLibrary).GetMethod("AddCallResultToShim"), null);
+
+            // unmark the current shim - no longer active
+            ilGenerator.EmitCall(OpCodes.Call, typeof(ShimmedMethodLibrary).GetMethod("ClearRunningMethod"), null);
 
             // return
             ilGenerator.MarkLabel(returnLabel);
@@ -124,11 +135,6 @@ namespace Shimmy
         protected void AddCallResult() => AddCallResultWithParams(this, new object[] { });
 
         protected void AddCallResultWithParams(params object[] parameters) => CallResults.Add(new ShimmedMethodCall(parameters));
-
-        public static void AddCallResultToShim(object[] parameters) {
-            Console.WriteLine(string.Join(", ", parameters));
-        }
-
 
         #endregion
     }
