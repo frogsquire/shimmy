@@ -59,7 +59,12 @@ namespace Shimmy.Tests
                 throw new NotImplementedException("Intentionally unimplemented!");
             }
 
-            public static int MethodWithReferenceTypeParams(List<int> args)
+            public static List<int> MethodWithReferenceTypeParamsAndReturn(List<int> args)
+            {
+                throw new NotImplementedException("Intentionally unimplemented!");
+            }
+
+            public static List<int> MethodWithMultiReferenceTypeParamsAndReturn(List<int> a, string b, DateTime c)
             {
                 throw new NotImplementedException("Intentionally unimplemented!");
             }
@@ -162,8 +167,7 @@ namespace Shimmy.Tests
             var expectedParam = callResult.Parameters[0];
             Assert.AreEqual("bird", (string)expectedParam);
         }
-
-
+        
         [TestMethod]
         public void ShimmedMethod_Generates_From_Static_Call_Records_Multi_Parameters()
         {
@@ -188,6 +192,53 @@ namespace Shimmy.Tests
             Assert.AreEqual(6, (int)callResult.Parameters[1]);
             Assert.AreEqual("bird", (string)callResult.Parameters[2]);
             Assert.IsTrue(new List<bool> { true, false, true }.SequenceEqual((List<bool>)callResult.Parameters[3]));
+        }
+
+        [TestMethod]
+        public void ShimmedMethod_Generates_From_Static_Call_With_Param_And_Returns_Value()
+        {
+            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithParamAndReturn"));
+            Assert.IsNotNull(shimmedMethod);
+            Assert.IsNotNull(shimmedMethod.Method);
+            Assert.IsNotNull(shimmedMethod.Shim);
+
+            var beforeDateTime = DateTime.Now;
+            int value = -1;
+            PoseContext.Isolate(() => {
+                value = TestClass.MethodWithParamAndReturn(2);
+            }, new[] { shimmedMethod.Shim });
+            Assert.AreEqual(0, value); // Shimmy will set to default for that value type
+            Assert.AreEqual(1, shimmedMethod.CallResults.Count);
+            var callResult = shimmedMethod.CallResults.First();
+            Assert.IsNotNull(callResult.Parameters);
+            var afterDateTime = DateTime.Now;
+            Assert.IsNotNull(callResult.CalledAt);
+            Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
+            Assert.AreEqual(2, (int)callResult.Parameters[0]);
+        }
+
+        [TestMethod]
+        public void ShimmedMethod_Generates_From_Static_Call_With_Multi_Params_And_Returns_Value()
+        {
+            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithParamsAndReturn"));
+            Assert.IsNotNull(shimmedMethod);
+            Assert.IsNotNull(shimmedMethod.Method);
+            Assert.IsNotNull(shimmedMethod.Shim);
+
+            var beforeDateTime = DateTime.Now;
+            int value = -1;
+            PoseContext.Isolate(() => {
+                value = TestClass.MethodWithParamsAndReturn(2, 4);
+            }, new[] { shimmedMethod.Shim });
+            Assert.AreEqual(0, value); // Shimmy will set to default for that value type
+            Assert.AreEqual(1, shimmedMethod.CallResults.Count);
+            var callResult = shimmedMethod.CallResults.First();
+            Assert.IsNotNull(callResult.Parameters);
+            var afterDateTime = DateTime.Now;
+            Assert.IsNotNull(callResult.CalledAt);
+            Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
+            Assert.AreEqual(2, (int)callResult.Parameters[0]);
+            Assert.AreEqual(4, (int)callResult.Parameters[1]);
         }
     }
 }

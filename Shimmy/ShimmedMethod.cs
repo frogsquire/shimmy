@@ -11,7 +11,7 @@ namespace Shimmy
     internal class ShimmedMethod
     {
         private Guid _libraryReferenceGuid;
-        private ParameterExpression[] _expressionParameters;
+        protected ParameterExpression[] _expressionParameters;
 
         public const int MaximumPoseParameters = 10; 
 
@@ -53,6 +53,11 @@ namespace Shimmy
             if (!_expressionParameters.Any())
                 return (Action)(() => AddCallResult());
 
+            return GenerateDynaimcShim();
+        }
+
+        protected Delegate GenerateDynaimcShim(Type returnType = null)
+        {
             var paramTypesArray = _expressionParameters.Select(p => p.Type).ToArray();
 
             var dynamicMethod = new DynamicMethod("shimmy_" + Method.Name, 
@@ -79,7 +84,7 @@ namespace Shimmy
             ilGenerator.Emit(OpCodes.Stloc, arrayLocal);
 
             // load each parameter into the object array
-            for(int i = 0; i < paramTypesArray.Length; i++)
+            for (int i = 0; i < paramTypesArray.Length; i++)
             {
                 // set current array index
                 ilGenerator.Emit(OpCodes.Ldloc, arrayLocal);
@@ -103,12 +108,30 @@ namespace Shimmy
             // unmark the current shim - no longer active
             ilGenerator.EmitCall(OpCodes.Call, typeof(ShimmedMethodLibrary).GetMethod("ClearRunningMethod"), null);
 
-            // return
+            // return - with default return value if necessary
+            // provided via a call so the stack will accomodate it (?)
+            if (returnType != null)
+            {
+                var isAMethod = typeof(Is).GetMethod("A");
+                var genericIsAMethod = isAMethod.MakeGenericMethod(new[] { returnType });
+                ilGenerator.EmitCall(OpCodes.Call, genericIsAMethod, null);
+            }
+
             ilGenerator.MarkLabel(returnLabel);
             ilGenerator.Emit(OpCodes.Ret);
 
-            var dynamicAction = Expression.GetActionType(paramTypesArray);
-            return dynamicMethod.CreateDelegate(dynamicAction);
+            Type dynamicDelegateType; 
+            if (returnType != null)
+            {
+                var paramTypesArrayWithReturnType = paramTypesArray.Concat(new[] { returnType }).ToArray();
+                dynamicDelegateType = Expression.GetFuncType(paramTypesArrayWithReturnType);
+            }
+            else
+            {
+                dynamicDelegateType = Expression.GetActionType(paramTypesArray);
+            }
+
+            return dynamicMethod.CreateDelegate(dynamicDelegateType);
         }
 
         protected ParameterExpression[] GenerateExpressionParameters()
@@ -130,13 +153,10 @@ namespace Shimmy
             return expressionParameters;
         }
 
-        #region AddCallResult
-
         protected void AddCallResult() => AddCallResultWithParams(this, new object[] { });
 
         protected void AddCallResultWithParams(params object[] parameters) => CallResults.Add(new ShimmedMethodCall(parameters));
 
-        #endregion
     }
 
     internal class ShimmedMethod<T> : ShimmedMethod
@@ -156,9 +176,12 @@ namespace Shimmy
             throw new NotImplementedException();
         }
         
-        private Func<T> GetShimActionWithReturn()
+        private Delegate GetShimActionWithReturn()
         {
-            return () => LogAndReturnDefault();
+            if(!_expressionParameters.Any())
+                return (Func<T>)(() => LogAndReturnDefault());
+
+            return GenerateDynaimcShim(typeof(T));
         }
 
         private T LogAndReturnDefault()
