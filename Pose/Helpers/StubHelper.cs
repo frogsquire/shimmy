@@ -39,7 +39,9 @@ namespace Pose.Helpers
         // (because they're sent to Pose as delegates?)
         public static bool MethodBaseIsShimmyDynamic(MethodBase methodBase)
         {
-            return methodBase.GetType().ToString().Equals(RTDynamicMethodType);
+            return methodBase != null
+                ? methodBase.GetType().ToString().Equals(RTDynamicMethodType)
+                : false;
         }
 
         public static IntPtr GetDynamicMethodFunctionPointer(DynamicMethod methodBase)
@@ -52,7 +54,7 @@ namespace Pose.Helpers
             => PoseContext.Shims[index].Replacement.Target;
 
         public static MethodInfo GetShimReplacementMethod(int index)
-            => PoseContext.Shims[index].Replacement.Method;
+            => index >= 0 ? PoseContext.Shims[index].Replacement.Method : null;
 
         public static int GetIndexOfMatchingShim(MethodBase methodBase, Type type, object obj)
         {
