@@ -116,7 +116,8 @@ namespace Shimmy
                 // return the default behavior (using Pose.Is.A)
                 // todo: make this configurable behavior
                 // todo: investigate circular reference issue in object with params in constructor
-                if (returnType.IsValueType)
+                // todo: add tests for this case
+                if (returnType.IsValueType || returnType.GetConstructor(Type.EmptyTypes) == null)
                 {
                     var isAMethod = typeof(Is).GetMethod("A");
                     var genericIsAMethod = isAMethod.MakeGenericMethod(new[] { returnType });
@@ -139,6 +140,8 @@ namespace Shimmy
             if (returnType != null)
             {
                 var paramTypesArrayWithReturnType = paramTypesArray.Concat(new[] { returnType }).ToArray();
+
+                // todo: theoretical limit here of 16 parameters, because func only supports that many
                 dynamicDelegateType = Expression.GetFuncType(paramTypesArrayWithReturnType);
             }
             else
