@@ -112,9 +112,24 @@ namespace Shimmy
             // provided via a call so the stack will accomodate it (?)
             if (returnType != null)
             {
-                var isAMethod = typeof(Is).GetMethod("A");
-                var genericIsAMethod = isAMethod.MakeGenericMethod(new[] { returnType });
-                ilGenerator.EmitCall(OpCodes.Call, genericIsAMethod, null);
+                // if it's a value type, or an object with parameters in the constructor
+                // return the default behavior (using Pose.Is.A)
+                // todo: make this configurable behavior
+                // todo: investigate circular reference issue in object with params in constructor
+                if (returnType.IsValueType)
+                {
+                    var isAMethod = typeof(Is).GetMethod("A");
+                    var genericIsAMethod = isAMethod.MakeGenericMethod(new[] { returnType });
+                    ilGenerator.EmitCall(OpCodes.Call, genericIsAMethod, null);
+                }
+                // if this is a reference type, and there is a parameterless constructor
+                // build an empty new object and return that
+                else
+                {
+                    var makeObjectMethod = typeof(EmptyInstance).GetMethod("Make");
+                    var genericMakeMethod = makeObjectMethod.MakeGenericMethod(new[] { returnType });
+                    ilGenerator.EmitCall(OpCodes.Call, genericMakeMethod, null);
+                }
             }
 
             ilGenerator.MarkLabel(returnLabel);

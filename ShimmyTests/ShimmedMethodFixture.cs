@@ -240,5 +240,29 @@ namespace Shimmy.Tests
             Assert.AreEqual(2, (int)callResult.Parameters[0]);
             Assert.AreEqual(4, (int)callResult.Parameters[1]);
         }
+
+        [TestMethod]
+        public void ShimmedMethod_Generates_From_Static_Call_With_Params_And_Returns_Reference_Type()
+        {
+            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("MethodWithParamsAndReferenceTypeReturn"));
+            Assert.IsNotNull(shimmedMethod);
+            Assert.IsNotNull(shimmedMethod.Method);
+            Assert.IsNotNull(shimmedMethod.Shim);
+
+            var beforeDateTime = DateTime.Now;
+            List<int> value = null;
+            PoseContext.Isolate(() => {
+                value = TestClass.MethodWithParamsAndReferenceTypeReturn(2, 4);
+            }, new[] { shimmedMethod.Shim });
+            Assert.IsNotNull(value);
+            Assert.AreEqual(1, shimmedMethod.CallResults.Count);
+            var callResult = shimmedMethod.CallResults.First();
+            Assert.IsNotNull(callResult.Parameters);
+            var afterDateTime = DateTime.Now;
+            Assert.IsNotNull(callResult.CalledAt);
+            Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
+            Assert.AreEqual(2, (int)callResult.Parameters[0]);
+            Assert.AreEqual(4, (int)callResult.Parameters[1]);
+        }
     }
 }
