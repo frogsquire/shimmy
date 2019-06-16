@@ -264,5 +264,53 @@ namespace Shimmy.Tests
             Assert.AreEqual(2, (int)callResult.Parameters[0]);
             Assert.AreEqual(4, (int)callResult.Parameters[1]);
         }
+
+        [TestMethod]
+        public void ShimmedMethod_Generates_From_Static_Call_With_Reference_Type_Param_And_Returns_Reference_Type()
+        {
+            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("MethodWithReferenceTypeParamsAndReturn"));
+            Assert.IsNotNull(shimmedMethod);
+            Assert.IsNotNull(shimmedMethod.Method);
+            Assert.IsNotNull(shimmedMethod.Shim);
+
+            var beforeDateTime = DateTime.Now;
+            List<int> value = null;
+            PoseContext.Isolate(() => {
+                value = TestClass.MethodWithReferenceTypeParamsAndReturn(new List<int> { 3, 2, 1 });
+            }, new[] { shimmedMethod.Shim });
+            Assert.IsNotNull(value);
+            Assert.AreEqual(1, shimmedMethod.CallResults.Count);
+            var callResult = shimmedMethod.CallResults.First();
+            Assert.IsNotNull(callResult.Parameters);
+            var afterDateTime = DateTime.Now;
+            Assert.IsNotNull(callResult.CalledAt);
+            Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
+            Assert.IsTrue(((List<int>)callResult.Parameters[0]).SequenceEqual(new List<int> { 3, 2, 1 }));
+        }
+
+        [TestMethod]
+        public void ShimmedMethod_Generates_From_Static_Call_With_Multi_Params_And_Returns_Reference_Type()
+        {
+            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("MethodWithMultiReferenceTypeParamsAndReturn"));
+            Assert.IsNotNull(shimmedMethod);
+            Assert.IsNotNull(shimmedMethod.Method);
+            Assert.IsNotNull(shimmedMethod.Shim);
+
+            var beforeDateTime = DateTime.Now;
+            List<int> value = null;
+            PoseContext.Isolate(() => {
+                value = TestClass.MethodWithMultiReferenceTypeParamsAndReturn(new List<int> { 3, 2, 1 }, "bird", DateTime.Today);
+            }, new[] { shimmedMethod.Shim });
+            Assert.IsNotNull(value);
+            Assert.AreEqual(1, shimmedMethod.CallResults.Count);
+            var callResult = shimmedMethod.CallResults.First();
+            Assert.IsNotNull(callResult.Parameters);
+            var afterDateTime = DateTime.Now;
+            Assert.IsNotNull(callResult.CalledAt);
+            Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
+            Assert.IsTrue(((List<int>)callResult.Parameters[0]).SequenceEqual(new List<int> { 3, 2, 1 }));
+            Assert.AreEqual("bird", (string)callResult.Parameters[1]);
+            Assert.AreEqual(DateTime.Today, (DateTime)callResult.Parameters[2]);
+        }
     }
 }
