@@ -53,10 +53,10 @@ namespace Shimmy
             if (!_expressionParameters.Any())
                 return (Action)(() => AddCallResult());
 
-            return GenerateDynaimcShim();
+            return GenerateDynamicShim();
         }
 
-        protected Delegate GenerateDynaimcShim(Type returnType = null)
+        protected Delegate GenerateDynamicShim(Type returnType = null)
         {
             var paramTypesArray = _expressionParameters.Select(p => p.Type).ToArray();
 
@@ -181,7 +181,7 @@ namespace Shimmy
             if(!_expressionParameters.Any())
                 return (Func<T>)(() => LogAndReturnDefault());
 
-            return GenerateDynaimcShim(typeof(T));
+            return GenerateDynamicShim(typeof(T));
         }
 
         private T LogAndReturnDefault()
