@@ -3,16 +3,13 @@ using Pose;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Reflection.Emit;
 
-namespace Shimmy.Tests
+namespace Shimmy.Tests.ShimmedMethodTests
 {
     [TestClass]
-    public class ShimmedMethodFixture
+    public class ShimmedMethodStaticMethodsFixture
     {
-        private class TestClass
+        private static class TestClass
         {
             public static void EmptyMethod()
             {

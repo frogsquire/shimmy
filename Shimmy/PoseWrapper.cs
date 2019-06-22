@@ -57,6 +57,7 @@ namespace Shimmy
             if (type == typeof(void))
                 return new ShimmedMethod(m);
 
+            // todo: pass invoking instance if needed
             var genericShimmedMethod = typeof(ShimmedMethod<>).MakeGenericType(new Type[] { m.ReturnType });
             return (ShimmedMethod)Activator.CreateInstance(genericShimmedMethod, new object[] { m });
         }

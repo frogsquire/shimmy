@@ -168,20 +168,34 @@ namespace Pose.IL
             ilGenerator.Emit(OpCodes.Ldc_I4_M1);
             ilGenerator.Emit(OpCodes.Ceq);
             ilGenerator.Emit(OpCodes.Brtrue_S, rewriteLabel);
-            ilGenerator.Emit(OpCodes.Ldloc_1);
-            ilGenerator.Emit(OpCodes.Call, typeof(StubHelper).GetMethod("GetShimReplacementMethod"));
-            ilGenerator.Emit(OpCodes.Stloc_0);
-            ilGenerator.Emit(OpCodes.Ldloc_0);
-            ilGenerator.Emit(OpCodes.Call, typeof(StubHelper).GetMethod("GetMethodPointer"));
-            ilGenerator.Emit(OpCodes.Stloc_2);
-            ilGenerator.Emit(OpCodes.Ldloc_1);
-            ilGenerator.Emit(OpCodes.Call, typeof(StubHelper).GetMethod("GetShimDelegateTarget"));
-            for (int i = 0; i < signatureParamTypes.Count; i++)
-                ilGenerator.Emit(OpCodes.Ldarg, i);
-            ilGenerator.Emit(OpCodes.Ldloc_2);
-            ilGenerator.EmitCalli(OpCodes.Calli, CallingConventions.HasThis, methodInfo.ReturnType, signatureParamTypes.ToArray(), null);
-            ilGenerator.Emit(OpCodes.Br_S, returnLabel);
 
+            var methodBase = StubHelper.GetShimReplacementMethod(StubHelper.GetIndexOfMatchingShim(methodInfo as MethodBase, null));
+
+            // todo: unify this with similar code above
+            if (StubHelper.MethodBaseIsShimmyDynamic(methodBase))
+            {
+                var dynamicMethod = StubHelper.GetDynamicMethodFromDynamicMethodBase(methodBase);
+
+                EmitArguments(ilGenerator, signatureParamTypes);
+                ilGenerator.EmitCall(OpCodes.Call, dynamicMethod, null);
+            }
+            else
+            {
+                ilGenerator.Emit(OpCodes.Ldloc_1);
+                ilGenerator.Emit(OpCodes.Call, typeof(StubHelper).GetMethod("GetShimReplacementMethod"));
+                ilGenerator.Emit(OpCodes.Stloc_0);
+                ilGenerator.Emit(OpCodes.Ldloc_0);
+                ilGenerator.Emit(OpCodes.Call, typeof(StubHelper).GetMethod("GetMethodPointer"));
+                ilGenerator.Emit(OpCodes.Stloc_2);
+                ilGenerator.Emit(OpCodes.Ldloc_1);
+                ilGenerator.Emit(OpCodes.Call, typeof(StubHelper).GetMethod("GetShimDelegateTarget"));
+                for (int i = 0; i < signatureParamTypes.Count; i++)
+                    ilGenerator.Emit(OpCodes.Ldarg, i);
+                ilGenerator.Emit(OpCodes.Ldloc_2);
+                ilGenerator.EmitCalli(OpCodes.Calli, CallingConventions.HasThis, methodInfo.ReturnType, signatureParamTypes.ToArray(), null);
+            }
+
+            ilGenerator.Emit(OpCodes.Br_S, returnLabel);
             ilGenerator.MarkLabel(rewriteLabel);
             ilGenerator.Emit(OpCodes.Ldloc_0);
             ilGenerator.Emit(OpCodes.Call, typeof(MethodRewriter).GetMethod("CreateRewriter", new Type[] { typeof(MethodBase) }));

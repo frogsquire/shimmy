@@ -114,6 +114,11 @@ namespace Pose.Helpers
                         instanceOrType = methodInfo.GetGenericArguments().FirstOrDefault();
                         break;
                     }
+                case ExpressionType.Constant:
+                    {
+                        instanceOrType = (expression as ConstantExpression).Value;
+                        break;
+                    }
                 default:
                     return null;
             }

@@ -10,8 +10,12 @@ namespace Shimmy
 {
     internal class ShimmedMethod
     {
+        public const string InvokingInstanceNotProvidedMessage = "Cannot generate shim - must provide an invoking instance for non-static members.";
+
         private Guid _libraryReferenceGuid;
         protected ParameterExpression[] _expressionParameters;
+
+        protected object InvokingInstance;
 
         public const int MaximumPoseParameters = 10; 
 
@@ -21,11 +25,13 @@ namespace Shimmy
 
         public Shim Shim { get; private set; }
 
-        public ShimmedMethod(MethodInfo method)
+
+        public ShimmedMethod(MethodInfo method, object invokingInstance = null)
         {
             Method = method ?? throw new ArgumentNullException(nameof(method));
             _expressionParameters = GenerateExpressionParameters();
             _libraryReferenceGuid = ShimmedMethodLibrary.Add(this);
+            InvokingInstance = invokingInstance;
 
             Shim = GenerateShim();
             CallResults = new List<ShimmedMethodCall>();
@@ -33,24 +39,23 @@ namespace Shimmy
 
         protected virtual Shim GenerateShim()
         {
-            if (Method.IsStatic)
+            if (!Method.IsStatic && InvokingInstance == null)
             {
-                return Shim.Replace(GenerateCallExpression()).With(GetShimAction());
+                throw new InvalidOperationException(InvokingInstanceNotProvidedMessage);
             }
 
-            // todo: implement other method types
-            throw new NotImplementedException();
-
+            return Shim.Replace(GenerateCallExpression()).With(GetShimAction());
         }
 
         protected Expression<Action> GenerateCallExpression()
         {
-            return Expression.Lambda<Action>(Expression.Call(null, Method, _expressionParameters));
+            var constant = InvokingInstance == null ? null : Expression.Constant(InvokingInstance);
+            return Expression.Lambda<Action>(Expression.Call(constant, Method, _expressionParameters));
         }
 
         private Delegate GetShimAction()
         {
-            if (!_expressionParameters.Any())
+            if (!_expressionParameters.Any() && Method.IsStatic)
                 return (Action)(() => AddCallResult());
 
             return GenerateDynamicShim();
@@ -58,14 +63,29 @@ namespace Shimmy
 
         protected Delegate GenerateDynamicShim(Type returnType = null)
         {
-            var paramTypesArray = _expressionParameters.Select(p => p.Type).ToArray();
+            var expressionParamsArray = _expressionParameters.Select(p => p.Type).ToArray();
+
+            Type[] paramTypesArray;
+            if (InvokingInstance == null)
+            {
+                paramTypesArray = expressionParamsArray;
+            }
+            else
+            {
+                var invokingTypeArray = new Type[] { InvokingInstance.GetType() };
+                paramTypesArray = new Type[expressionParamsArray.Length + 1];
+                invokingTypeArray.CopyTo(paramTypesArray, 0);
+                expressionParamsArray.CopyTo(paramTypesArray, 1);
+            }
+
+            var owner = InvokingInstance == null ? typeof(ShimmedMethod) : InvokingInstance.GetType();
 
             var dynamicMethod = new DynamicMethod("shimmy_" + Method.Name, 
-                MethodAttributes.Public | MethodAttributes.Static , // todo: support non-static
+                MethodAttributes.Public | MethodAttributes.Static,
                 CallingConventions.Standard,
                 Method.ReturnType, 
                 paramTypesArray, 
-                typeof(ShimmedMethod),
+                owner,
                 false);
 
             var ilGenerator = dynamicMethod.GetILGenerator();
@@ -179,24 +199,23 @@ namespace Shimmy
 
     internal class ShimmedMethod<T> : ShimmedMethod
     {
-        public ShimmedMethod(MethodInfo method) : base(method)
+        public ShimmedMethod(MethodInfo method, object invokingInstance = null) : base(method, invokingInstance)
         {
         }
 
         protected override Shim GenerateShim()
         {
-            if (Method.IsStatic)
+            if (!Method.IsStatic && InvokingInstance == null)
             {
-                return Shim.Replace(GenerateCallExpression()).With(GetShimActionWithReturn());
+                throw new InvalidOperationException(InvokingInstanceNotProvidedMessage);
             }
 
-            // todo: implement other method types
-            throw new NotImplementedException();
+            return Shim.Replace(GenerateCallExpression()).With(GetShimActionWithReturn());
         }
         
         private Delegate GetShimActionWithReturn()
         {
-            if(!_expressionParameters.Any())
+            if(!_expressionParameters.Any() && InvokingInstance == null)
                 return (Func<T>)(() => LogAndReturnDefault());
 
             return GenerateDynamicShim(typeof(T));
