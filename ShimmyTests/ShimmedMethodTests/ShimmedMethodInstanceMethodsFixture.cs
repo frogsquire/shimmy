@@ -69,6 +69,17 @@ namespace Shimmy.Tests.ShimmedMethodTests
                 throw new NotImplementedException("Intentionally unimplemented!");
             }
 
+            public virtual void EmptyVirtualMethod()
+            {
+                throw new NotImplementedException("Intentionally unimplemented!");
+            }
+
+            public virtual List<int> VirtualMethodWithMultiReferenceTypeParamsAndReturn(List<int> a, string b, DateTime c)
+            {
+                throw new NotImplementedException("Intentionally unimplemented!");
+            }
+
+
         }
 
         [TestMethod]
@@ -81,6 +92,21 @@ namespace Shimmy.Tests.ShimmedMethodTests
                 Assert.Fail("Expected InvalidOperationException!");
             }
             catch(InvalidOperationException e)
+            {
+                Assert.AreEqual(ShimmedMethod.InvokingInstanceNotProvidedMessage, e.Message);
+            }
+        }
+
+        [TestMethod]
+        public void ShimmedMethod_Throws_Exception_If_InvokingInstance_Not_Provided_For_Instance_Method_Without_Return()
+        {
+            try
+            {
+                var a = new TestClass();
+                var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("EmptyMethod"), null);
+                Assert.Fail("Expected InvalidOperationException!");
+            }
+            catch (InvalidOperationException e)
             {
                 Assert.AreEqual(ShimmedMethod.InvokingInstanceNotProvidedMessage, e.Message);
             }
@@ -110,7 +136,33 @@ namespace Shimmy.Tests.ShimmedMethodTests
             var instanceParam = callResult.Parameters[0] as TestClass;
             Assert.IsNotNull(instanceParam);
             Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
-        }        
+        }
+
+        [TestMethod]
+        public void ShimmedMethod_Generates_From_Empty_Instance_Virtual_Method_Call()
+        {
+            var a = new TestClass();
+            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("EmptyVirtualMethod"), a);
+            Assert.IsNotNull(shimmedMethod);
+            Assert.IsNotNull(shimmedMethod.Method);
+            Assert.IsNotNull(shimmedMethod.Shim);
+
+            var beforeDateTime = DateTime.Now;
+            PoseContext.Isolate(() => {
+                a.EmptyVirtualMethod();
+            }, new[] { shimmedMethod.Shim });
+            Assert.AreEqual(1, shimmedMethod.CallResults.Count);
+            var callResult = shimmedMethod.CallResults.First();
+            Assert.IsNotNull(callResult.Parameters);
+            var afterDateTime = DateTime.Now;
+            Assert.IsNotNull(callResult.CalledAt);
+            Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
+
+            // first parameter should be instance
+            var instanceParam = callResult.Parameters[0] as TestClass;
+            Assert.IsNotNull(instanceParam);
+            Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
+        }
 
         [TestMethod]
         public void ShimmedMethod_Generates_From_Instance_Call_And_Returns_Value()
@@ -367,6 +419,38 @@ namespace Shimmy.Tests.ShimmedMethodTests
             List<int> value = null;
             PoseContext.Isolate(() => {
                 value = a.MethodWithMultiReferenceTypeParamsAndReturn(new List<int> { 3, 2, 1 }, "bird", DateTime.Today);
+            }, new[] { shimmedMethod.Shim });
+            Assert.IsNotNull(value);
+            Assert.AreEqual(1, shimmedMethod.CallResults.Count);
+            var callResult = shimmedMethod.CallResults.First();
+            Assert.IsNotNull(callResult.Parameters);
+            var afterDateTime = DateTime.Now;
+            Assert.IsNotNull(callResult.CalledAt);
+            Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
+
+            // first parameter should be instance
+            var instanceParam = callResult.Parameters[0] as TestClass;
+            Assert.IsNotNull(instanceParam);
+            Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
+
+            Assert.IsTrue(((List<int>)callResult.Parameters[1]).SequenceEqual(new List<int> { 3, 2, 1 }));
+            Assert.AreEqual("bird", (string)callResult.Parameters[2]);
+            Assert.AreEqual(DateTime.Today, (DateTime)callResult.Parameters[3]);
+        }
+
+        [TestMethod]
+        public void ShimmedMethod_Generates_From_Virtual_Instance_Call_With_Multi_Params_And_Returns_Reference_Type()
+        {
+            var a = new TestClass();
+            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("VirtualMethodWithMultiReferenceTypeParamsAndReturn"), a);
+            Assert.IsNotNull(shimmedMethod);
+            Assert.IsNotNull(shimmedMethod.Method);
+            Assert.IsNotNull(shimmedMethod.Shim);
+
+            var beforeDateTime = DateTime.Now;
+            List<int> value = null;
+            PoseContext.Isolate(() => {
+                value = a.VirtualMethodWithMultiReferenceTypeParamsAndReturn(new List<int> { 3, 2, 1 }, "bird", DateTime.Today);
             }, new[] { shimmedMethod.Shim });
             Assert.IsNotNull(value);
             Assert.AreEqual(1, shimmedMethod.CallResults.Count);
