@@ -25,8 +25,14 @@ namespace Shimmy
 
         public Shim Shim { get; private set; }
 
-
         public ShimmedMethod(MethodInfo method, object invokingInstance = null)
+        {
+            Init(method, invokingInstance);
+        }
+
+        protected ShimmedMethod() { }
+
+        protected void Init(MethodInfo method, object invokingInstance)
         {
             Method = method ?? throw new ArgumentNullException(nameof(method));
             _expressionParameters = GenerateExpressionParameters();
@@ -125,32 +131,16 @@ namespace Shimmy
             ilGenerator.Emit(OpCodes.Ldloc, arrayLocal);
             ilGenerator.EmitCall(OpCodes.Call, typeof(ShimmedMethodLibrary).GetMethod("AddCallResultToShim"), null);
 
-            // unmark the current shim - no longer active
-            ilGenerator.EmitCall(OpCodes.Call, typeof(ShimmedMethodLibrary).GetMethod("ClearRunningMethod"), null);
-
             // return - with default return value if necessary
-            // provided via a call so the stack will accomodate it (?)
-            if (returnType != null)
+            // provided via a call so the stack will accomodate it
+            if (returnType == null)
             {
-                // if it's a value type, or an object with parameters in the constructor
-                // return the default behavior (using Pose.Is.A)
-                // todo: make this configurable behavior
-                // todo: investigate circular reference issue in object with params in constructor
-                // todo: add tests for this case
-                if (returnType.IsValueType || returnType.GetConstructor(Type.EmptyTypes) == null)
-                {
-                    var isAMethod = typeof(Is).GetMethod("A");
-                    var genericIsAMethod = isAMethod.MakeGenericMethod(new[] { returnType });
-                    ilGenerator.EmitCall(OpCodes.Call, genericIsAMethod, null);
-                }
-                // if this is a reference type, and there is a parameterless constructor
-                // build an empty new object and return that
-                else
-                {
-                    var makeObjectMethod = typeof(EmptyInstance).GetMethod("Make");
-                    var genericMakeMethod = makeObjectMethod.MakeGenericMethod(new[] { returnType });
-                    ilGenerator.EmitCall(OpCodes.Call, genericMakeMethod, null);
-                }
+                ilGenerator.EmitCall(OpCodes.Call, typeof(ShimmedMethodLibrary).GetMethod("ClearRunningMethod"), null);
+            }
+            else
+            {
+                var method = typeof(ShimmedMethodLibrary).GetMethod("GetReturnValueAndClearRunningMethod").MakeGenericMethod(new Type[] { returnType });
+                ilGenerator.EmitCall(OpCodes.Call, method, null);
             }
 
             ilGenerator.MarkLabel(returnLabel);
@@ -199,8 +189,20 @@ namespace Shimmy
 
     internal class ShimmedMethod<T> : ShimmedMethod
     {
+        public T ReturnValue { get; set; }
+
+        public bool HasCustomReturnValue => !EqualityComparer<T>.Default.Equals(ReturnValue, default(T));
+
         public ShimmedMethod(MethodInfo method, object invokingInstance = null) : base(method, invokingInstance)
         {
+        }
+
+        public ShimmedMethod(MethodInfo method, T returnValue, object invokingInstance = null) : base()
+        {
+            ReturnValue = returnValue;
+
+            // init must be second so method generation will check for return value
+            Init(method, invokingInstance);
         }
 
         protected override Shim GenerateShim()
@@ -212,10 +214,10 @@ namespace Shimmy
 
             return Shim.Replace(GenerateCallExpression()).With(GetShimActionWithReturn());
         }
-        
+
         private Delegate GetShimActionWithReturn()
         {
-            if(!_expressionParameters.Any() && InvokingInstance == null)
+            if(!_expressionParameters.Any() && InvokingInstance == null && !HasCustomReturnValue)
                 return (Func<T>)(() => LogAndReturnDefault());
 
             return GenerateDynamicShim(typeof(T));
