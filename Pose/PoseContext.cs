@@ -16,16 +16,39 @@ namespace Pose
         {
             if (shims == null || shims.Length == 0)
             {
-                entryPoint.Invoke();
+                entryPoint.DynamicInvoke();
                 return;
             }
 
-            Shims = shims;
-            StubCache = new Dictionary<MethodBase, DynamicMethod>();
-
             Type delegateType = typeof(Action<>).MakeGenericType(entryPoint.Target.GetType());
-            MethodRewriter rewriter = MethodRewriter.CreateRewriter(entryPoint.Method);
-            ((MethodInfo)(rewriter.Rewrite())).CreateDelegate(delegateType).DynamicInvoke(entryPoint.Target);
+            IsolateExistingDelegate(entryPoint, delegateType, shims);
         }
+
+        public static void IsolateExistingDelegate(Delegate entryPoint, Type delegateType, params Shim[] shims)
+        {
+            if (shims == null || shims.Length == 0)
+            {
+                entryPoint.DynamicInvoke();
+                return;
+            }
+
+            RewriteAndExecute(entryPoint, delegateType, shims);
+        }
+
+        private static void RewriteAndExecute(Delegate entryPoint, Type delegateType, params Shim[] shims)
+        {
+            Shims = shims;
+            StubCache = new Dictionary<MethodBase, DynamicMethod>();        
+
+            MethodRewriter rewriter = MethodRewriter.CreateRewriter(entryPoint.Method);
+            if (entryPoint.Target != null)
+            {
+                ((MethodInfo)(rewriter.Rewrite())).CreateDelegate(delegateType).DynamicInvoke(entryPoint.Target);
+            }
+            else
+            {
+                ((MethodInfo)(rewriter.Rewrite())).CreateDelegate(delegateType).DynamicInvoke();
+            }
+        }        
     }
 }

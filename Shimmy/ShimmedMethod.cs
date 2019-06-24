@@ -61,6 +61,10 @@ namespace Shimmy
 
         private Delegate GetShimAction()
         {
+            // if it's not necessary, don't build a dynamic method
+            // this shortcut bypasses the ShimmedMethodLibrary
+            // and the overhead of a dynamicmethod
+            // while still logging the call
             if (!_expressionParameters.Any() && Method.IsStatic)
                 return (Action)(() => AddCallResult());
 
@@ -181,7 +185,7 @@ namespace Shimmy
             return expressionParameters;
         }
 
-        protected void AddCallResult() => AddCallResultWithParams(this, new object[] { });
+        protected void AddCallResult() => AddCallResultWithParams(new object[] { });
 
         protected void AddCallResultWithParams(params object[] parameters) => CallResults.Add(new ShimmedMethodCall(parameters));
 

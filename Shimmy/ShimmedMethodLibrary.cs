@@ -5,6 +5,11 @@ using System.Text;
 
 namespace Shimmy
 {
+    /*
+     * ShimmedMethodLibary routes call results called in from dynamically generated IL
+     * to the appropriate methods. It is not called on methods which have no params and also
+     * have a non-void return type.
+     */
     internal static class ShimmedMethodLibrary
     {
         private static Dictionary<Guid, ShimmedMethod> _library = new Dictionary<Guid, ShimmedMethod>();
