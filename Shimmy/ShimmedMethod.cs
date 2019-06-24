@@ -150,20 +150,7 @@ namespace Shimmy
             ilGenerator.MarkLabel(returnLabel);
             ilGenerator.Emit(OpCodes.Ret);
 
-            Type dynamicDelegateType; 
-            if (returnType != null)
-            {
-                var paramTypesArrayWithReturnType = paramTypesArray.Concat(new[] { returnType }).ToArray();
-
-                // todo: theoretical limit here of 16 parameters, because func only supports that many
-                dynamicDelegateType = Expression.GetFuncType(paramTypesArrayWithReturnType);
-            }
-            else
-            {
-                dynamicDelegateType = Expression.GetActionType(paramTypesArray);
-            }
-
-            return dynamicMethod.CreateDelegate(dynamicDelegateType);
+            return dynamicMethod.CreateDelegate(DelegateTypeHelper.GetTypeForDelegate(paramTypesArray, returnType));
         }
 
         protected ParameterExpression[] GenerateExpressionParameters()

@@ -18,7 +18,9 @@ namespace Shimmy
          * In PoseWrapper, the entry point is assumed to be an Action.
          * In PoseWrapper<T>, it's assumed to be a function with a return type of T.
          */
-        internal Delegate _entryPoint { get; set; }
+        internal Delegate _entryPoint;
+
+        internal Type _entryPointType; 
 
         public PoseWrapper(Action entryPoint)
         {
@@ -29,11 +31,17 @@ namespace Shimmy
         {
             Init(entryPoint);
         }
+        
+        protected PoseWrapper(Delegate entryPoint, Type returnType)
+        {
+            Init(entryPoint, returnType);
+        }
 
-        private void Init(Delegate entryPoint)
+        private void Init(Delegate entryPoint, Type returnType = null)
         {
             _entryPoint = entryPoint ?? throw new ArgumentException("Cannot convert entryPoint to Action. Did you mean to use PoseWrapper<>?");
             _entryPointParameters = entryPoint.Method.GetParameters();
+            _entryPointType = DelegateTypeHelper.GetTypeForDelegate(_entryPointParameters.Select(epp => epp.ParameterType).ToArray(), returnType);
             GenerateShimmedMethods();
         }
 
@@ -51,7 +59,7 @@ namespace Shimmy
 
             VerifyArguments(args);
 
-            PoseContext.IsolateExistingDelegate(_entryPoint, typeof(Action), GetShims());
+            PoseContext.IsolateDelegate(_entryPoint, _entryPointType, GetShims(), args);
         }
 
         protected void VerifyArguments(params object[] args)
@@ -73,7 +81,7 @@ namespace Shimmy
                 }
 
                 var relevantArgumentType = relevantArgument.GetType();
-                if (relevantArgument.GetType() != _entryPointParameters[i].GetType())
+                if (relevantArgument.GetType() != relevantParameter.ParameterType)
                     throw new ArgumentException("Argument list is invalid: parameter " + i + " is of type " + relevantArgumentType + "; expected " + relevantParameter.ParameterType);
             }
         }
@@ -100,7 +108,7 @@ namespace Shimmy
             }).ToList();
         }
 
-        private Shim[] GetShims()
+        protected Shim[] GetShims()
         {
             return _shimmedMethods.Select(sm => sm.Shim).ToArray();
         }
@@ -125,13 +133,13 @@ namespace Shimmy
 
             // todo: pass invoking instance if needed
             var genericShimmedMethod = typeof(ShimmedMethod<>).MakeGenericType(new Type[] { m.ReturnType });
-            return (ShimmedMethod)Activator.CreateInstance(genericShimmedMethod, new object[] { m });
+            return (ShimmedMethod)Activator.CreateInstance(genericShimmedMethod, new object[] { m, null });
         }
     }
 
     public class PoseWrapper<T> : PoseWrapper
     {
-        public PoseWrapper(Delegate entryPoint) : base(entryPoint)
+        public PoseWrapper(Delegate entryPoint) : base(entryPoint, entryPoint.Method.ReturnType)
         {
             var returnType = entryPoint.Method.ReturnType;
             if (returnType != typeof(T))
@@ -151,14 +159,7 @@ namespace Shimmy
 
             VerifyArguments(args);
 
-            T result = default(T); // todo: a way around this?
-
-            // todo
-            PoseContext.Isolate(() =>
-            {
-                result = (T)_entryPoint.DynamicInvoke(args);
-            });
-            return result;
+            return PoseContext.IsolateDelegate<T>(_entryPoint, _entryPointType, GetShims(), args);
         }
     }
 }
