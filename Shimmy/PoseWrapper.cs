@@ -106,9 +106,11 @@ namespace Shimmy
         private void GenerateShimmedMethods()
         {
             var methods = GetMethodCallsInEntryPoint(_entryPoint);
-            _shimmedMethods = methods.Select(m => {
-                return GetShimmedMethod(m);
-            }).ToList();
+            _shimmedMethods = new List<ShimmedMethod>();
+            foreach(var method in methods)
+            {
+                _shimmedMethods.Add(GetShimmedMethod(method));
+            }
         }
 
         protected Shim[] GetShims()
@@ -129,14 +131,19 @@ namespace Shimmy
 
         private ShimmedMethod GetShimmedMethod(MethodInfo m)
         {
+            // if a shim already exists for this method, don't create a duplicate            
+            var existingShim = _shimmedMethods.FirstOrDefault(sm => sm.Method == m);
+            if (existingShim != null)
+                return existingShim;
+
+            // build the shim with appropriate return type
             var type = m.ReturnType;
 
             if (type == typeof(void))
                 return new ShimmedMethod(m);
 
-            // todo: pass invoking instance if needed
             var genericShimmedMethod = typeof(ShimmedMethod<>).MakeGenericType(new Type[] { m.ReturnType });
-            return (ShimmedMethod)Activator.CreateInstance(genericShimmedMethod, new object[] { m, null });
+            return (ShimmedMethod)Activator.CreateInstance(genericShimmedMethod, new object[] { m });
         }
     }
 
