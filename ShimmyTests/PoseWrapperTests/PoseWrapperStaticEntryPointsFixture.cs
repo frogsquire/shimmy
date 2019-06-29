@@ -65,7 +65,6 @@ namespace Shimmy.Tests.PoseWrapperTests
             {
                 return StaticMethodsTestClass.MethodWithMultiReferenceTypeParamsAndReturn(a, b, c);
             }
-
         }
 
         // todo: test clearing of lastexecutionresults

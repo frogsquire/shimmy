@@ -84,40 +84,10 @@ namespace Shimmy.Tests.ShimmedMethodTests
         }
 
         [TestMethod]
-        public void ShimmedMethod_Throws_Exception_If_InvokingInstance_Not_Provided_For_Instance_Method()
-        {
-            try
-            {
-                var a = new TestClass();
-                var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithReturn"), null);
-                Assert.Fail("Expected InvalidOperationException!");
-            }
-            catch(InvalidOperationException e)
-            {
-                Assert.AreEqual(ShimmedMethod.InvokingInstanceNotProvidedMessage, e.Message);
-            }
-        }
-
-        [TestMethod]
-        public void ShimmedMethod_Throws_Exception_If_InvokingInstance_Not_Provided_For_Instance_Method_Without_Return()
-        {
-            try
-            {
-                var a = new TestClass();
-                var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("EmptyMethod"), null);
-                Assert.Fail("Expected InvalidOperationException!");
-            }
-            catch (InvalidOperationException e)
-            {
-                Assert.AreEqual(ShimmedMethod.InvokingInstanceNotProvidedMessage, e.Message);
-            }
-        }
-
-        [TestMethod]
         public void ShimmedMethod_Generates_From_Empty_Instance_Method_Call()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("EmptyMethod"), a);
+            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("EmptyMethod"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -143,7 +113,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
         public void ShimmedMethod_Generates_From_Empty_Instance_Virtual_Method_Call()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("EmptyVirtualMethod"), a);
+            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("EmptyVirtualMethod"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -169,7 +139,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
         public void ShimmedMethod_Generates_From_Instance_Call_And_Returns_Value()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithReturn"), a);
+            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithReturn"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -197,7 +167,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
         public void ShimmedMethod_Generates_From_Instance_Call_Records_Value_Type_Parameters()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("MethodWithValueTypeParam"), a);
+            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("MethodWithValueTypeParam"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -227,7 +197,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
         public void ShimmedMethod_Generates_From_Instance_Call_Records_String_Parameters()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("MethodWithStringParam"), a);
+            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("MethodWithStringParam"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -257,7 +227,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
         public void ShimmedMethod_Generates_From_Instance_Call_Records_Multi_Parameters()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("MethodWithMultiParams"), a);
+            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("MethodWithMultiParams"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -289,7 +259,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
         public void ShimmedMethod_Generates_From_Instance_Call_With_Param_And_Returns_Value()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithParamAndReturn"), a);
+            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithParamAndReturn"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -319,7 +289,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
         public void ShimmedMethod_Generates_From_Instance_Call_With_Multi_Params_And_Returns_Value()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithParamsAndReturn"), a);
+            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithParamsAndReturn"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -350,7 +320,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
         public void ShimmedMethod_Generates_From_Instance_Call_With_Params_And_Returns_Reference_Type()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("MethodWithParamsAndReferenceTypeReturn"), a);
+            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("MethodWithParamsAndReferenceTypeReturn"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -381,7 +351,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
         public void ShimmedMethod_Generates_From_Instance_Call_With_Reference_Type_Param_And_Returns_Reference_Type()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("MethodWithReferenceTypeParamsAndReturn"), a);
+            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("MethodWithReferenceTypeParamsAndReturn"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -411,7 +381,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
         public void ShimmedMethod_Generates_From_Instance_Call_With_Multi_Params_And_Returns_Reference_Type()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("MethodWithMultiReferenceTypeParamsAndReturn"), a);
+            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("MethodWithMultiReferenceTypeParamsAndReturn"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -443,7 +413,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
         public void ShimmedMethod_Generates_From_Virtual_Instance_Call_With_Multi_Params_And_Returns_Reference_Type()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("VirtualMethodWithMultiReferenceTypeParamsAndReturn"), a);
+            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("VirtualMethodWithMultiReferenceTypeParamsAndReturn"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);

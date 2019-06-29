@@ -11,12 +11,9 @@ namespace Shimmy.Data
 {
     internal class ShimmedMethod
     {
-        public const string InvokingInstanceNotProvidedMessage = "Cannot generate shim - must provide an invoking instance for non-static members.";
-
         private Guid _libraryReferenceGuid;
         protected ParameterExpression[] _expressionParameters;
-
-        protected object InvokingInstance;
+        protected Type DeclaringType;
 
         public const int MaximumPoseParameters = 10; 
 
@@ -26,19 +23,19 @@ namespace Shimmy.Data
 
         public Shim Shim { get; private set; }
 
-        public ShimmedMethod(MethodInfo method, object invokingInstance = null)
+        public ShimmedMethod(MethodInfo method)
         {
-            Init(method, invokingInstance);
+            Init(method);
         }
 
         protected ShimmedMethod() { }
 
-        protected void Init(MethodInfo method, object invokingInstance)
+        protected void Init(MethodInfo method)
         {
             Method = method ?? throw new ArgumentNullException(nameof(method));
             _expressionParameters = GenerateExpressionParameters();
             _libraryReferenceGuid = ShimmedMethodLibrary.Add(this);
-            InvokingInstance = invokingInstance;
+            DeclaringType = method.DeclaringType;
 
             Shim = GenerateShim();
             CallResults = new List<ShimmedMethodCall>();
@@ -46,18 +43,18 @@ namespace Shimmy.Data
 
         protected virtual Shim GenerateShim()
         {
-            if (!Method.IsStatic && InvokingInstance == null)
-            {
-                throw new InvalidOperationException(InvokingInstanceNotProvidedMessage);
-            }
-
             return Shim.Replace(GenerateCallExpression()).With(GetShimAction());
         }
 
         protected Expression<Action> GenerateCallExpression()
         {
-            var constant = InvokingInstance == null ? null : Expression.Constant(InvokingInstance);
-            return Expression.Lambda<Action>(Expression.Call(constant, Method, _expressionParameters));
+            Expression poseIsACall = null;
+            if (!Method.IsStatic)
+            {
+                var poseIsAMethod = typeof(Pose.Is).GetMethod("A").MakeGenericMethod(new[] { DeclaringType });
+                poseIsACall = Expression.Call(null, poseIsAMethod);
+            }
+            return Expression.Lambda<Action>(Expression.Call(poseIsACall, Method, _expressionParameters));
         }
 
         private Delegate GetShimAction()
@@ -77,26 +74,24 @@ namespace Shimmy.Data
             var expressionParamsArray = _expressionParameters.Select(p => p.Type).ToArray();
 
             Type[] paramTypesArray;
-            if (InvokingInstance == null)
+            if (Method.IsStatic)
             {
                 paramTypesArray = expressionParamsArray;
             }
             else
             {
-                var invokingTypeArray = new Type[] { InvokingInstance.GetType() };
+                var invokingTypeArray = new Type[] { DeclaringType };
                 paramTypesArray = new Type[expressionParamsArray.Length + 1];
                 invokingTypeArray.CopyTo(paramTypesArray, 0);
                 expressionParamsArray.CopyTo(paramTypesArray, 1);
             }
-
-            var owner = InvokingInstance == null ? typeof(ShimmedMethod) : InvokingInstance.GetType();
 
             var dynamicMethod = new DynamicMethod("shimmy_" + Method.Name, 
                 MethodAttributes.Public | MethodAttributes.Static,
                 CallingConventions.Standard,
                 Method.ReturnType, 
                 paramTypesArray, 
-                owner,
+                DeclaringType,
                 false);
 
             var ilGenerator = dynamicMethod.GetILGenerator();
@@ -185,31 +180,26 @@ namespace Shimmy.Data
 
         public bool HasCustomReturnValue => !EqualityComparer<T>.Default.Equals(ReturnValue, default(T));
 
-        public ShimmedMethod(MethodInfo method, object invokingInstance = null) : base(method, invokingInstance)
+        public ShimmedMethod(MethodInfo method) : base(method)
         {
         }
 
-        public ShimmedMethod(MethodInfo method, T returnValue, object invokingInstance = null) : base()
+        public ShimmedMethod(MethodInfo method, T returnValue) : base()
         {
             ReturnValue = returnValue;
 
             // init must be second so method generation will check for return value
-            Init(method, invokingInstance);
+            Init(method);
         }
 
         protected override Shim GenerateShim()
         {
-            if (!Method.IsStatic && InvokingInstance == null)
-            {
-                throw new InvalidOperationException(InvokingInstanceNotProvidedMessage);
-            }
-
             return Shim.Replace(GenerateCallExpression()).With(GetShimActionWithReturn());
         }
 
         private Delegate GetShimActionWithReturn()
         {
-            if(!_expressionParameters.Any() && InvokingInstance == null && !HasCustomReturnValue)
+            if(!_expressionParameters.Any() && Method.IsStatic && !HasCustomReturnValue)
                 return (Func<T>)(() => LogAndReturnDefault());
 
             return GenerateDynamicShim(typeof(T));

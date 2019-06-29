@@ -40,7 +40,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
         public void ShimmedMethod_Call_Returns_Custom_Return_Value_For_Instance_Method_Value_Type()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithValueReturnType"), 5, a);
+            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithValueReturnType"), 5);
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -85,7 +85,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
         public void ShimmedMethod_Call_Returns_Custom_Return_Value_For_Instance_Method_Reference_Type()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("MethodWithReferenceReturnType"), new List<int> { 1, 2, 3 }, a);
+            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("MethodWithReferenceReturnType"), new List<int> { 1, 2, 3 });
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -130,7 +130,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
         public void ShimmedMethod_Call_Returns_New_Return_Value_When_Return_Value_Changed()
         {
             var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithValueReturnType"), 5, a);
+            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithValueReturnType"), 5);
             var value = 0;
             PoseContext.Isolate(() => {
                 value = a.MethodWithValueReturnType();
