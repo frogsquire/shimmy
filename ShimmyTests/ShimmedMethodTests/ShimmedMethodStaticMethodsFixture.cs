@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Shimmy.Tests.SharedTestClasses;
+using Shimmy.Data;
 
 namespace Shimmy.Tests.ShimmedMethodTests
 {

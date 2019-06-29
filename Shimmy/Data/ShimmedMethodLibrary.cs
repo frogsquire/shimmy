@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
-namespace Shimmy
+namespace Shimmy.Data
 {
     /*
      * ShimmedMethodLibary routes call results called in from dynamically generated IL

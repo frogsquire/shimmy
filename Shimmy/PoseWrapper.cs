@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using Mono.Reflection;
+using Shimmy.Data;
+using Shimmy.Helpers;
 
 namespace Shimmy
 {
@@ -31,17 +33,18 @@ namespace Shimmy
         {
             Init(entryPoint);
         }
-        
-        protected PoseWrapper(Delegate entryPoint, Type returnType)
-        {
-            Init(entryPoint, returnType);
-        }
 
-        private void Init(Delegate entryPoint, Type returnType = null)
+        public PoseWrapper(Delegate entryPoint, Type returnType = null, Type entryPointType = null, ParameterInfo[] entryPointParameters = null)
+        {
+            Init(entryPoint, returnType, entryPointType, entryPointParameters);
+        }        
+
+        private void Init(Delegate entryPoint, Type returnType = null, Type entryPointType = null, ParameterInfo[] entryPointParameters = null)
         {
             _entryPoint = entryPoint ?? throw new ArgumentException("Cannot convert entryPoint to Action. Did you mean to use PoseWrapper<>?");
-            _entryPointParameters = entryPoint.Method.GetParameters();
-            _entryPointType = DelegateTypeHelper.GetTypeForDelegate(_entryPointParameters.Select(epp => epp.ParameterType).ToArray(), returnType);
+            _entryPointParameters = entryPointParameters ?? entryPoint.Method.GetParameters();
+            _entryPointType = entryPointType 
+                ?? DelegateTypeHelper.GetTypeForDelegate(_entryPointParameters.Select(epp => epp.ParameterType).ToArray(), returnType);
             GenerateShimmedMethods();
         }
 
@@ -139,19 +142,25 @@ namespace Shimmy
 
     public class PoseWrapper<T> : PoseWrapper
     {
-        public PoseWrapper(Delegate entryPoint) : base(entryPoint, entryPoint.Method.ReturnType)
+        public PoseWrapper(Delegate entryPoint, Type entryPointType = null) : base(entryPoint, entryPoint.Method.ReturnType, entryPointType)
         {
-            var returnType = entryPoint.Method.ReturnType;
-            if (returnType != typeof(T))
+            if (entryPoint.Method.ReturnType == null || entryPoint.Method.ReturnType != typeof(T))
+                throw new ArgumentException("Return type of entry point and generic type must match.");
+
+        }
+
+        public PoseWrapper(Delegate entryPoint, Type returnType = null, Type entryPointType = null, ParameterInfo[] entryPointParameters = null) : base(entryPoint, returnType, entryPointType, entryPointParameters)
+        {
+            if (returnType == null || returnType != typeof(T))
                 throw new ArgumentException("Return type of entry point and generic type must match.");
         }
+
 
         public new T Execute(params object[] args)
         {
             return Execute(true, args);
         }
 
-        // todo: what if there are params?
         public new T Execute(bool clearLastCallResults = true, params object[] args)
         {
             if (clearLastCallResults)

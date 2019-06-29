@@ -1,4 +1,5 @@
 ﻿using Pose;
+using Shimmy.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace Shimmy
+namespace Shimmy.Data
 {
     internal class ShimmedMethod
     {
