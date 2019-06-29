@@ -1,9 +1,8 @@
+using Pose.IL;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using Pose.IL;
 
 namespace Pose
 {
@@ -36,13 +35,16 @@ namespace Pose
             StubCache = new Dictionary<MethodBase, DynamicMethod>();
 
             MethodRewriter rewriter = MethodRewriter.CreateRewriter(entryPoint.Method);
-            if (entryPoint.Target != null)
+            var delToInvoke = ((MethodInfo)(rewriter.Rewrite())).CreateDelegate(delegateType);
+
+            if (IsActionDelegateWithoutEntryPointFirstParam(delToInvoke, entryPoint.Method)
+                || entryPoint.Target == null)
             {
-                ((MethodInfo)(rewriter.Rewrite())).CreateDelegate(delegateType).DynamicInvoke(entryPoint.Target);
+                delToInvoke.DynamicInvoke(args);
             }
             else
             {
-                ((MethodInfo)(rewriter.Rewrite())).CreateDelegate(delegateType).DynamicInvoke(args);
+                delToInvoke.DynamicInvoke(entryPoint.Target);
             }
         }
 
@@ -51,7 +53,9 @@ namespace Pose
             var returnType = typeof(T);
 
             if (entryPoint.Method.ReturnType != returnType)
+            {
                 throw new InvalidOperationException("Cannot return a type of " + returnType + " when specified method expects " + entryPoint.Method.ReturnType + ".");
+            }
 
             if (shims == null || shims.Length == 0)
             {
@@ -62,14 +66,53 @@ namespace Pose
             StubCache = new Dictionary<MethodBase, DynamicMethod>();
 
             MethodRewriter rewriter = MethodRewriter.CreateRewriter(entryPoint.Method);
-            if (entryPoint.Target != null)
-            {
-                return (T)((MethodInfo)(rewriter.Rewrite())).CreateDelegate(delegateType).DynamicInvoke(entryPoint.Target);
-            }
-            else
-            {
-                return (T)((MethodInfo)(rewriter.Rewrite())).CreateDelegate(delegateType).DynamicInvoke(args);
-            }
+            var delToInvoke = ((MethodInfo)(rewriter.Rewrite())).CreateDelegate(delegateType);
+            var parameters = delToInvoke.Method.GetParameters();
+            return (T)delToInvoke.DynamicInvoke(args);            
+        }
+
+        // todo: move this?
+        static readonly Type[] _actionTypes = new[] {
+            typeof(Action<>),
+            typeof(Action<,>),
+            typeof(Action<,,>),
+            typeof(Action<,,,>),
+            typeof(Action<,,,,>),
+            typeof(Action<,,,,,>),
+            typeof(Action<,,,,,,>),
+            typeof(Action<,,,,,,,>),
+            typeof(Action<,,,,,,,,>),
+            typeof(Action<,,,,,,,,,>),
+            typeof(Action<,,,,,,,,,,>),
+            typeof(Action<,,,,,,,,,,,>),
+            typeof(Action<,,,,,,,,,,,,>),
+            typeof(Action<,,,,,,,,,,,,,>),
+            typeof(Action<,,,,,,,,,,,,,,>),
+            typeof(Action<,,,,,,,,,,,,,,,>)
+        };
+
+        // todo: determine this upstream - figure out when such a delegate is created
+        private static bool IsActionDelegateWithoutEntryPointFirstParam(Delegate candidate, MethodInfo originalMethod)
+        {
+            if (candidate == null)
+                return false;
+
+            var type = candidate.GetType();
+
+            if (type == typeof(Action))
+                return true;
+
+            var isGenericAction = false;
+            if (type.IsGenericType)
+                isGenericAction = Array.IndexOf(_actionTypes, type.GetGenericTypeDefinition()) >= 0;
+
+            if (!isGenericAction)
+                return false;
+
+            var actionParameters = type.GetGenericArguments();
+            return actionParameters == null
+                || actionParameters.Length == 0
+                || actionParameters[0] != originalMethod.DeclaringType;
         }
     }
 }
