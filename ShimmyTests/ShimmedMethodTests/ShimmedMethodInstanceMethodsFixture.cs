@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Pose;
 using Shimmy.Data;
+using Shimmy.Tests.SharedTestClasses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,83 +12,11 @@ namespace Shimmy.Tests.ShimmedMethodTests
     [TestClass]
     public class ShimmedMethodInstanceMethodsFixture
     {
-        private class TestClass
-        {
-            public Guid InstanceGuid = Guid.NewGuid();
-
-            public void EmptyMethod()
-            {
-                throw new NotImplementedException("Intentionally unimplemented!");
-            }
-
-            public void MethodWithValueTypeParam(int a)
-            {
-                throw new NotImplementedException("Intentionally unimplemented!");
-            }
-
-            public void MethodWithStringParam(string b)
-            {
-                throw new NotImplementedException("Intentionally unimplemented!");
-            }
-
-            public void MethodWithObjectParam(List<bool> l)
-            {
-                throw new NotImplementedException("Intentionally unimplemented!");
-            }
-
-            public void MethodWithMultiParams(int a, int b, string c, List<bool> d)
-            {
-                throw new NotImplementedException("Intentionally unimplemented!");
-            }
-
-            public int MethodWithReturn()
-            {
-                throw new NotImplementedException("Intentionally unimplemented!");
-            }
-
-            public int MethodWithParamAndReturn(int param1)
-            {
-                throw new NotImplementedException("Intentionally unimplemented!");
-            }
-
-            public int MethodWithParamsAndReturn(int param1, int param2)
-            {
-                throw new NotImplementedException("Intentionally unimplemented!");
-            }
-
-            public List<int> MethodWithParamsAndReferenceTypeReturn(int param1, int param2)
-            {
-                throw new NotImplementedException("Intentionally unimplemented!");
-            }
-
-            public List<int> MethodWithReferenceTypeParamsAndReturn(List<int> args)
-            {
-                throw new NotImplementedException("Intentionally unimplemented!");
-            }
-
-            public List<int> MethodWithMultiReferenceTypeParamsAndReturn(List<int> a, string b, DateTime c)
-            {
-                throw new NotImplementedException("Intentionally unimplemented!");
-            }
-
-            public virtual void EmptyVirtualMethod()
-            {
-                throw new NotImplementedException("Intentionally unimplemented!");
-            }
-
-            public virtual List<int> VirtualMethodWithMultiReferenceTypeParamsAndReturn(List<int> a, string b, DateTime c)
-            {
-                throw new NotImplementedException("Intentionally unimplemented!");
-            }
-
-
-        }
-
         [TestMethod]
         public void ShimmedMethod_Generates_From_Empty_Instance_Method_Call()
         {
-            var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("EmptyMethod"));
+            var a = new InstanceMethodsTestClass();
+            var shimmedMethod = new ShimmedMethod(typeof(InstanceMethodsTestClass).GetMethod("EmptyMethod"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -104,7 +33,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
             Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
 
             // first parameter should be instance
-            var instanceParam = callResult.Parameters[0] as TestClass;
+            var instanceParam = callResult.Parameters[0] as InstanceMethodsTestClass;
             Assert.IsNotNull(instanceParam);
             Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
         }
@@ -112,8 +41,8 @@ namespace Shimmy.Tests.ShimmedMethodTests
         [TestMethod]
         public void ShimmedMethod_Generates_From_Empty_Instance_Virtual_Method_Call()
         {
-            var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("EmptyVirtualMethod"));
+            var a = new InstanceMethodsTestClass();
+            var shimmedMethod = new ShimmedMethod(typeof(InstanceMethodsTestClass).GetMethod("EmptyVirtualMethod"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -130,7 +59,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
             Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
 
             // first parameter should be instance
-            var instanceParam = callResult.Parameters[0] as TestClass;
+            var instanceParam = callResult.Parameters[0] as InstanceMethodsTestClass;
             Assert.IsNotNull(instanceParam);
             Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
         }
@@ -138,8 +67,8 @@ namespace Shimmy.Tests.ShimmedMethodTests
         [TestMethod]
         public void ShimmedMethod_Generates_From_Instance_Call_And_Returns_Value()
         {
-            var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithReturn"));
+            var a = new InstanceMethodsTestClass();
+            var shimmedMethod = new ShimmedMethod<int>(typeof(InstanceMethodsTestClass).GetMethod("MethodWithReturn"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -158,7 +87,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
             Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
 
             // first parameter should be instance
-            var instanceParam = callResult.Parameters[0] as TestClass;
+            var instanceParam = callResult.Parameters[0] as InstanceMethodsTestClass;
             Assert.IsNotNull(instanceParam);
             Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
         }
@@ -166,8 +95,8 @@ namespace Shimmy.Tests.ShimmedMethodTests
         [TestMethod]
         public void ShimmedMethod_Generates_From_Instance_Call_Records_Value_Type_Parameters()
         {
-            var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("MethodWithValueTypeParam"));
+            var a = new InstanceMethodsTestClass();
+            var shimmedMethod = new ShimmedMethod(typeof(InstanceMethodsTestClass).GetMethod("MethodWithValueTypeParam"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -185,7 +114,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
             Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
 
             // first parameter should be instance
-            var instanceParam = callResult.Parameters[0] as TestClass;
+            var instanceParam = callResult.Parameters[0] as InstanceMethodsTestClass;
             Assert.IsNotNull(instanceParam);
             Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
 
@@ -196,8 +125,8 @@ namespace Shimmy.Tests.ShimmedMethodTests
         [TestMethod]
         public void ShimmedMethod_Generates_From_Instance_Call_Records_String_Parameters()
         {
-            var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("MethodWithStringParam"));
+            var a = new InstanceMethodsTestClass();
+            var shimmedMethod = new ShimmedMethod(typeof(InstanceMethodsTestClass).GetMethod("MethodWithStringParam"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -215,7 +144,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
             Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
 
             // first parameter should be instance
-            var instanceParam = callResult.Parameters[0] as TestClass;
+            var instanceParam = callResult.Parameters[0] as InstanceMethodsTestClass;
             Assert.IsNotNull(instanceParam);
             Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
 
@@ -226,8 +155,8 @@ namespace Shimmy.Tests.ShimmedMethodTests
         [TestMethod]
         public void ShimmedMethod_Generates_From_Instance_Call_Records_Multi_Parameters()
         {
-            var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("MethodWithMultiParams"));
+            var a = new InstanceMethodsTestClass();
+            var shimmedMethod = new ShimmedMethod(typeof(InstanceMethodsTestClass).GetMethod("MethodWithMultiParams"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -245,7 +174,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
             Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
 
             // first parameter should be instance
-            var instanceParam = callResult.Parameters[0] as TestClass;
+            var instanceParam = callResult.Parameters[0] as InstanceMethodsTestClass;
             Assert.IsNotNull(instanceParam);
             Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
 
@@ -258,8 +187,8 @@ namespace Shimmy.Tests.ShimmedMethodTests
         [TestMethod]
         public void ShimmedMethod_Generates_From_Instance_Call_With_Param_And_Returns_Value()
         {
-            var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithParamAndReturn"));
+            var a = new InstanceMethodsTestClass();
+            var shimmedMethod = new ShimmedMethod<int>(typeof(InstanceMethodsTestClass).GetMethod("MethodWithParamAndReturn"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -278,7 +207,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
             Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
 
             // first parameter should be instance
-            var instanceParam = callResult.Parameters[0] as TestClass;
+            var instanceParam = callResult.Parameters[0] as InstanceMethodsTestClass;
             Assert.IsNotNull(instanceParam);
             Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
 
@@ -288,8 +217,8 @@ namespace Shimmy.Tests.ShimmedMethodTests
         [TestMethod]
         public void ShimmedMethod_Generates_From_Instance_Call_With_Multi_Params_And_Returns_Value()
         {
-            var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("MethodWithParamsAndReturn"));
+            var a = new InstanceMethodsTestClass();
+            var shimmedMethod = new ShimmedMethod<int>(typeof(InstanceMethodsTestClass).GetMethod("MethodWithParamsAndReturn"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -308,7 +237,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
             Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
 
             // first parameter should be instance
-            var instanceParam = callResult.Parameters[0] as TestClass;
+            var instanceParam = callResult.Parameters[0] as InstanceMethodsTestClass;
             Assert.IsNotNull(instanceParam);
             Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
 
@@ -319,8 +248,8 @@ namespace Shimmy.Tests.ShimmedMethodTests
         [TestMethod]
         public void ShimmedMethod_Generates_From_Instance_Call_With_Params_And_Returns_Reference_Type()
         {
-            var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("MethodWithParamsAndReferenceTypeReturn"));
+            var a = new InstanceMethodsTestClass();
+            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(InstanceMethodsTestClass).GetMethod("MethodWithParamsAndReferenceTypeReturn"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -339,7 +268,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
             Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
 
             // first parameter should be instance
-            var instanceParam = callResult.Parameters[0] as TestClass;
+            var instanceParam = callResult.Parameters[0] as InstanceMethodsTestClass;
             Assert.IsNotNull(instanceParam);
             Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
 
@@ -350,8 +279,8 @@ namespace Shimmy.Tests.ShimmedMethodTests
         [TestMethod]
         public void ShimmedMethod_Generates_From_Instance_Call_With_Reference_Type_Param_And_Returns_Reference_Type()
         {
-            var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("MethodWithReferenceTypeParamsAndReturn"));
+            var a = new InstanceMethodsTestClass();
+            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(InstanceMethodsTestClass).GetMethod("MethodWithReferenceTypeParamsAndReturn"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -370,7 +299,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
             Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
 
             // first parameter should be instance
-            var instanceParam = callResult.Parameters[0] as TestClass;
+            var instanceParam = callResult.Parameters[0] as InstanceMethodsTestClass;
             Assert.IsNotNull(instanceParam);
             Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
 
@@ -380,8 +309,8 @@ namespace Shimmy.Tests.ShimmedMethodTests
         [TestMethod]
         public void ShimmedMethod_Generates_From_Instance_Call_With_Multi_Params_And_Returns_Reference_Type()
         {
-            var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("MethodWithMultiReferenceTypeParamsAndReturn"));
+            var a = new InstanceMethodsTestClass();
+            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(InstanceMethodsTestClass).GetMethod("MethodWithMultiReferenceTypeParamsAndReturn"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -400,7 +329,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
             Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
 
             // first parameter should be instance
-            var instanceParam = callResult.Parameters[0] as TestClass;
+            var instanceParam = callResult.Parameters[0] as InstanceMethodsTestClass;
             Assert.IsNotNull(instanceParam);
             Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
 
@@ -412,8 +341,8 @@ namespace Shimmy.Tests.ShimmedMethodTests
         [TestMethod]
         public void ShimmedMethod_Generates_From_Virtual_Instance_Call_With_Multi_Params_And_Returns_Reference_Type()
         {
-            var a = new TestClass();
-            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(TestClass).GetMethod("VirtualMethodWithMultiReferenceTypeParamsAndReturn"));
+            var a = new InstanceMethodsTestClass();
+            var shimmedMethod = new ShimmedMethod<List<int>>(typeof(InstanceMethodsTestClass).GetMethod("VirtualMethodWithMultiReferenceTypeParamsAndReturn"));
             Assert.IsNotNull(shimmedMethod);
             Assert.IsNotNull(shimmedMethod.Method);
             Assert.IsNotNull(shimmedMethod.Shim);
@@ -432,7 +361,7 @@ namespace Shimmy.Tests.ShimmedMethodTests
             Assert.IsTrue(beforeDateTime < callResult.CalledAt && callResult.CalledAt < afterDateTime);
 
             // first parameter should be instance
-            var instanceParam = callResult.Parameters[0] as TestClass;
+            var instanceParam = callResult.Parameters[0] as InstanceMethodsTestClass;
             Assert.IsNotNull(instanceParam);
             Assert.AreEqual(a.InstanceGuid, instanceParam.InstanceGuid);
 

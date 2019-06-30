@@ -72,7 +72,7 @@ namespace Pose
         }
 
         // todo: move this?
-        static readonly Type[] _actionTypes = new[] {
+        private static readonly Type[] _actionTypes = new[] {
             typeof(Action<>),
             typeof(Action<,>),
             typeof(Action<,,>),
