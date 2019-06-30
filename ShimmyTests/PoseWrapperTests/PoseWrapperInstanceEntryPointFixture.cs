@@ -96,7 +96,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         }
 
         [TestMethod]
-        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_And_Returns_Value_Static_Method()
+        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_And_Returns_Value_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
             var wrapper = new PoseWrapper<int>((Func<int>)a.MethodWithReturn, null);
@@ -124,7 +124,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         }
 
         [TestMethod]
-        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_Records_Value_Type_Parameters_Static_Method()
+        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_Records_Value_Type_Parameters_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
             var wrapper = new PoseWrapper((Action<int>)a.MethodWithValueTypeParam);
@@ -153,7 +153,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         }
 
         [TestMethod]
-        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_Records_String_Parameters_Static_Method()
+        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_Records_String_Parameters_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
             var wrapper = new PoseWrapper((Action<string>)a.MethodWithStringParam);
@@ -182,7 +182,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         }
 
         [TestMethod]
-        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_Records_Multi_Parameters_Static_Method()
+        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_Records_Multi_Parameters_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
             var wrapper = new PoseWrapper((Action<int, int, string, List<bool>>)a.MethodWithMultiParams);
@@ -213,7 +213,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         }
 
         [TestMethod]
-        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Param_And_Returns_Value_Static_Method()
+        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Param_And_Returns_Value_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
             var wrapper = new PoseWrapper<int>((Func<int, int>)a.MethodWithParamAndReturn, null);
@@ -243,7 +243,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         }
 
         [TestMethod]
-        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Multi_Params_And_Returns_Value_Static_Method()
+        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Multi_Params_And_Returns_Value_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
             var wrapper = new PoseWrapper<int>((Func<int, int, int>)a.MethodWithParamsAndReturn, null);
@@ -274,7 +274,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         }
 
         [TestMethod]
-        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Params_And_Returns_Reference_Type_Static_Method()
+        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Params_And_Returns_Reference_Type_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
             var wrapper = new PoseWrapper<List<int>>((Func<int, int, List<int>>)a.MethodWithParamsAndReferenceTypeReturn, null);
@@ -305,7 +305,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         }
 
         [TestMethod]
-        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Reference_Type_Param_And_Returns_Reference_Type_Static_Method()
+        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Reference_Type_Param_And_Returns_Reference_Type_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
             var wrapper = new PoseWrapper<List<int>>((Func<List<int>, List<int>>)a.MethodWithReferenceTypeParamsAndReturn, null);
@@ -335,7 +335,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         }
 
         [TestMethod]
-        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Multi_Params_And_Returns_Reference_Type_Static_Method()
+        public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Multi_Params_And_Returns_Reference_Type_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
             var wrapper = new PoseWrapper<List<int>>((Func<List<int>, string, DateTime, List<int>>)a.MethodWithMultiReferenceTypeParamsAndReturn, null);
