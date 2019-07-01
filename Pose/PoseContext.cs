@@ -59,7 +59,7 @@ namespace Pose
 
             if (shims == null || shims.Length == 0)
             {
-                return (T)entryPoint.DynamicInvoke();
+                return (T)entryPoint.DynamicInvoke(args);
             }
 
             Shims = shims;

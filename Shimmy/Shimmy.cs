@@ -1,39 +1,104 @@
-﻿using Shimmy.Helpers;
+﻿using Pose.Helpers;
+using Shimmy.Helpers;
 using System;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Shimmy
 {
     public static class Shimmy
     {
-        public static PoseWrapper GenerateReturnlessWrapper(Delegate entryPoint)
+        public const string ReturnlessWrapperInvalidDelegate 
+            = "Cannot generate a returnless PoseWrapper for an entry point with a non-void return type. Use GetPoseWrapper<T> instead.";
+        public const string NonMatchingReturnType 
+            = "Return type of entry point and generic type parameter must match, or return type was null.";
+
+        // todo: support constructors, getters vs. setters, etc. from here
+        // and from the equivalent for GetPoseWrapper<T>
+        public static PoseWrapper GetPoseWrapper(Expression<Action> expression)
+        {
+            var method = (MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
+            if (instance is Type)
+                return GetPoseWrapper(method);
+            else
+                return GetPoseWrapper(method, instance);
+        }
+
+        public static PoseWrapper GetPoseWrapper(MethodInfo method, object instance = null)
+        {
+            var methodDelegate = GetDelegateFromMethodInfo(method, instance, out Type delegateType);
+            return GetPoseWrapper(methodDelegate, delegateType);
+        }
+
+        public static PoseWrapper GetPoseWrapper(Delegate entryPoint, Type delegateType = null)
         {
             var returnType = entryPoint.Method.ReturnType;
             var parameters = entryPoint.Method.GetParameters();
 
-            if (returnType != typeof(void))
-                throw new InvalidOperationException("Cannot generate a returnless PoseWrapper for an entry point with a non-void return type. Use GenerateWrapper<T> instead.");
+            if (returnType == null || returnType != typeof(void))
+                throw new ArgumentException(ReturnlessWrapperInvalidDelegate);
 
             if (parameters.Length == 0)
             {
                 return new PoseWrapper(entryPoint);
             }
 
-            var delegateType = DelegateTypeHelper.GetTypeForDelegate(parameters);
+            delegateType = delegateType
+                ?? DelegateTypeHelper.GetTypeForDelegate(parameters, returnType);
 
             return new PoseWrapper(entryPoint, null, delegateType, parameters);
         }
 
-        public static PoseWrapper<T> GenerateWrapper<T>(Delegate entryPoint)
+        public static PoseWrapper<T> GetPoseWrapper<T>(Expression<Action> expression)
+        {
+            var method = (MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
+            if (instance is Type)
+                return GetPoseWrapper<T>(method, null);
+            else
+                return GetPoseWrapper<T>(method, instance);
+        }
+
+        public static PoseWrapper<T> GetPoseWrapper<T>(MethodInfo method, object instance = null)
+        {
+            var methodDelegate = GetDelegateFromMethodInfo(method, instance, out Type delegateType);
+            return GetPoseWrapper<T>(methodDelegate, delegateType);
+        }
+
+        public static PoseWrapper<T> GetPoseWrapper<T>(Delegate entryPoint, Type delegateType = null)
         {
             var returnType = entryPoint.Method.ReturnType;
-            if (returnType != typeof(T))
-                throw new ArgumentException("Return type of entry point and generic type must match.");
+            if (returnType == null || returnType != typeof(T))
+                throw new ArgumentException(NonMatchingReturnType);
 
             var parameters = entryPoint.Method.GetParameters();
 
-            var delegateType = DelegateTypeHelper.GetTypeForDelegate(parameters, returnType);
+            delegateType = delegateType 
+                ?? DelegateTypeHelper.GetTypeForDelegate(parameters, returnType);
 
             return new PoseWrapper<T>(entryPoint, returnType, delegateType, parameters);
+        }
+
+        private static Delegate GetDelegateFromMethodInfo(MethodInfo method, object instance, out Type delegateType)
+        {
+            if (!method.IsStatic && instance == null)
+                throw new ArgumentException("An instance must be provided for a non-static method.");
+
+            if (instance != null && instance.GetType() != method.DeclaringType)
+                throw new ArgumentException("Provided instance must be an instance of " + method.DeclaringType);
+
+            delegateType = DelegateTypeHelper.GetTypeForDelegate(method.GetParameters(), method.ReturnType);
+
+            Delegate methodDelegate;
+            if (method.IsStatic)
+            {
+                methodDelegate = method.CreateDelegate(delegateType);
+            }
+            else
+            {
+                methodDelegate = method.CreateDelegate(delegateType, instance);
+            }
+
+            return methodDelegate;
         }
     }
 }

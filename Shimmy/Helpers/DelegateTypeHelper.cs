@@ -17,7 +17,7 @@ namespace Shimmy.Helpers
         public static Type GetTypeForDelegate(Type[] paramTypesArray, Type returnType = null)
         {
             Type dynamicDelegateType;
-            if (returnType != null)
+            if (returnType != null && returnType != typeof(void))
             {
                 var paramTypesArrayWithReturnType = paramTypesArray.Concat(new[] { returnType }).ToArray();
 
