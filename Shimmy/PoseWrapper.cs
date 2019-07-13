@@ -7,12 +7,14 @@ using System.Reflection.Emit;
 using Mono.Reflection;
 using Shimmy.Data;
 using Shimmy.Helpers;
+using System.Linq.Expressions;
+using Pose.Helpers;
 
 namespace Shimmy
 {
     public class PoseWrapper
     {
-        internal List<ShimmedMethod> _shimmedMethods;
+        internal HashSet<ShimmedMethod> _shimmedMethods;
 
         internal ParameterInfo[] _entryPointParameters;
 
@@ -97,7 +99,7 @@ namespace Shimmy
 
         public void ClearLastCallResults()
         {
-            _shimmedMethods.ForEach(sm => sm.CallResults.Clear());
+            _shimmedMethods.ToList().ForEach(sm => sm.CallResults.Clear());
         }
 
         public Dictionary<MethodInfo, List<ShimmedMethodCall>> LastExecutionResults =>
@@ -106,7 +108,7 @@ namespace Shimmy
         private void GenerateShimmedMethods()
         {
             var methods = GetMethodCallsInEntryPoint(_entryPoint);
-            _shimmedMethods = new List<ShimmedMethod>();
+            _shimmedMethods = new HashSet<ShimmedMethod>();
             foreach(var method in methods)
             {
                 _shimmedMethods.Add(GetShimmedMethod(method));
