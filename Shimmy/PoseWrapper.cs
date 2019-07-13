@@ -147,6 +147,39 @@ namespace Shimmy
             var genericShimmedMethod = typeof(ShimmedMethod<>).MakeGenericType(new Type[] { m.ReturnType });
             return (ShimmedMethod)Activator.CreateInstance(genericShimmedMethod, new object[] { m });
         }
+
+        public void SetReturn(Expression<Action> expression, object value)
+        {
+            var methodInfo = (MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
+            SetReturn(methodInfo, value);
+        }
+
+        /*
+         * Accepts methods in the form:
+         *  "methodName"
+         *  "className.methodName"
+         */
+        public void SetReturn(string methodName, object value)
+        {
+            var className = string.Empty;
+            if (methodName.Contains("."))
+            {
+                var splitMethodName = methodName.Split('.');
+                className = splitMethodName[0];
+                methodName = splitMethodName[1];
+            }
+
+            var shimmedMethod = _shimmedMethods.First(sm => sm.Method.Name.Equals(methodName)
+                    && (string.IsNullOrEmpty(className) || sm.Method.DeclaringType.Name.Equals(className)));
+
+            shimmedMethod.SetReturnValue(value);
+        }
+
+        public void SetReturn(MethodInfo method, object value)
+        {
+            var shimmedMethod = _shimmedMethods.First(sm => sm.Method.Equals(method));
+            shimmedMethod.SetReturnValue(value);
+        }
     }
 
     public class PoseWrapper<T> : PoseWrapper

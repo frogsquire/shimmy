@@ -15,6 +15,10 @@ namespace Shimmy.Tests.ShimmedMethodTests
         {
             public Guid InstanceGuid = Guid.NewGuid();
 
+            public static void VoidMethod()
+            {
+            }
+
             public int MethodWithValueReturnType()
             {
                 throw new NotImplementedException("Intentionally unimplemented.");
@@ -143,6 +147,42 @@ namespace Shimmy.Tests.ShimmedMethodTests
                 value2 = a.MethodWithValueReturnType();
             }, new[] { shimmedMethod.Shim });
             Assert.AreEqual(6, value2);
+
+            shimmedMethod.SetReturnValue(7);
+            var value3 = 0;
+            PoseContext.Isolate(() => {
+                value3 = a.MethodWithValueReturnType();
+            }, new[] { shimmedMethod.Shim });
+            Assert.AreEqual(7, value3);
+        }
+
+        [TestMethod]
+        public void ShimmedMethod_SetReturnValue_Excepts_When_Called_On_ShimmedMethod_With_Void_Return_Type()
+        {
+            var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("VoidMethod"));
+            try
+            {
+                shimmedMethod.SetReturnValue(5);
+            }
+            catch(InvalidOperationException e)
+            {
+                Assert.AreEqual(ShimmedMethod.CannotSetReturnTypeOnVoidMethodError, e.Message);
+            }
+        }
+
+        [TestMethod] 
+        public void ShimmedMethod_SetReturnValue_Excepts_When_Called_On_ShimmedMethod_With_Wrong_Param_Type()
+        {
+            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("StaticMethodWithValueReturnType"));
+            try
+            {
+                shimmedMethod.SetReturnValue("bird");
+            }
+            catch (InvalidOperationException e)
+            {
+                var expectedString = string.Format(ShimmedMethod.InvalidReturnTypeError, typeof(string), typeof(int));
+                Assert.AreEqual(expectedString, e.Message);
+            }
         }
     }
 }

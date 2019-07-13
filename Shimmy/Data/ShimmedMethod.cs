@@ -11,11 +11,14 @@ namespace Shimmy.Data
 {
     internal class ShimmedMethod
     {
+        public const int MaximumPoseParameters = 10;
+        public const string InvalidReturnTypeError = "Cannot set return value of type {0} on a method with return value of type {1}.";
+        public const string CannotSetReturnTypeOnVoidMethodError = "Cannot set return value on of a method with return type void.";
+
         private Guid _libraryReferenceGuid;
         protected ParameterExpression[] _expressionParameters;
         protected Type DeclaringType;
 
-        public const int MaximumPoseParameters = 10; 
 
         public MethodInfo Method { get; private set; }
 
@@ -172,6 +175,10 @@ namespace Shimmy.Data
 
         protected void AddCallResultWithParams(params object[] parameters) => CallResults.Add(new ShimmedMethodCall(parameters));
 
+        public virtual void SetReturnValue(object value)
+        {
+            throw new InvalidOperationException(CannotSetReturnTypeOnVoidMethodError);
+        }
     }
 
     internal class ShimmedMethod<T> : ShimmedMethod
@@ -200,15 +207,23 @@ namespace Shimmy.Data
         private Delegate GetShimActionWithReturn()
         {
             if(!_expressionParameters.Any() && Method.IsStatic && !HasCustomReturnValue)
-                return (Func<T>)(() => LogAndReturnDefault());
+                return (Func<T>)(() => LogAndReturn());
 
             return GenerateDynamicShim(typeof(T));
         }
 
-        private T LogAndReturnDefault()
+        private T LogAndReturn()
         {
             AddCallResult();
-            return default(T);
+            return ReturnValue;
+        }
+
+        public override void SetReturnValue(object value)
+        {
+            if (value.GetType() != typeof(T))
+                throw new InvalidOperationException(string.Format(InvalidReturnTypeError, value.GetType(), typeof(T)));
+
+            ReturnValue = (T)value;    
         }
     }
 }
