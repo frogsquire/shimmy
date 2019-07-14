@@ -38,7 +38,25 @@ namespace Shimmy.Tests.Data.ShimmedMethodTests
             {
                 throw new NotImplementedException("Intentionally unimplemented.");
             }
+
+            public static TestClassNoParameterlessConstructor GetTestClassNoParameterlessConstructor()
+            {
+                throw new NotImplementedException("Intentionally unimplemented.");
+            }
+
+            public static TestClass GetTestClass()
+            {
+                throw new NotImplementedException("Intentionally unimplemented.");
+            }
         }
+
+        private class TestClassNoParameterlessConstructor
+        {
+            public TestClassNoParameterlessConstructor(int a)
+            {
+            }
+        }
+
 
         [TestMethod]
         public void ShimmedMethod_Call_Returns_Custom_Return_Value_For_Instance_Method_Value_Type()
@@ -183,6 +201,27 @@ namespace Shimmy.Tests.Data.ShimmedMethodTests
                 var expectedString = string.Format(ShimmedMethod.InvalidReturnTypeError, typeof(string), typeof(int));
                 Assert.AreEqual(expectedString, e.Message);
             }
+        }
+
+        [TestMethod]
+        public void ShimmedMethod_Uses_Default_Return_Type_For_Value_Types_When_No_Return_Value_Specified()
+        {
+            var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("StaticMethodWithValueReturnType"));
+            Assert.AreEqual(default(int), shimmedMethod.ReturnValue);
+        }
+
+        [TestMethod]
+        public void ShimmedMethod_Uses_Default_For_Reference_Types_With_No_Parameterless_Constructor_When_No_Return_Value_Specified()
+        {
+            var shimmedMethod = new ShimmedMethod<TestClassNoParameterlessConstructor>(typeof(TestClass).GetMethod("GetTestClassNoParameterlessConstructor"));
+            Assert.AreEqual(default(TestClassNoParameterlessConstructor), shimmedMethod.ReturnValue);
+        }
+
+        [TestMethod]
+        public void ShimmedMethod_Uses_Empty_Object_For_Reference_Types_With_Parameterless_Constructor_When_No_Return_Value_Specified()
+        {
+            var shimmedMethod = new ShimmedMethod<TestClass>(typeof(TestClass).GetMethod("GetTestClass"));
+            Assert.IsNotNull(shimmedMethod.ReturnValue);
         }
     }
 }

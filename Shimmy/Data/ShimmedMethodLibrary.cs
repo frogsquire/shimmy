@@ -8,9 +8,14 @@ namespace Shimmy.Data
      * ShimmedMethodLibary routes call results called in from dynamically generated IL
      * to the appropriate methods. It is not called on methods which have no params and also
      * have a non-void return type.
+     * 
+     * TODO: support clearing of the library.
      */
     internal static class ShimmedMethodLibrary
     {
+        public const string CannotGetReturnValueNoMethodRunningError = "Cannot get return value for method - no shim is running.";
+        public const string CannotGetReturnValueNonMatchingTypeError = "Cannot get return value for method - specified return type does not match return type of shim.";
+
         private static Dictionary<Guid, ShimmedMethod> _library = new Dictionary<Guid, ShimmedMethod>();
         private static ShimmedMethod _currentRunningMethod; 
 
@@ -45,16 +50,16 @@ namespace Shimmy.Data
 
         public static T GetReturnValueAndClearRunningMethod<T>()
         {
-            if (_currentRunningMethod == null || _currentRunningMethod.GetType().IsSubclassOf(typeof(ShimmedMethod<>)))
+            if (_currentRunningMethod == null)
             {
-                throw new InvalidOperationException("Cannot get return value for method - no shim is running, or running shim has void return type.");
+                throw new InvalidOperationException(CannotGetReturnValueNoMethodRunningError);
             }
 
             var runningMethodGenerics = _currentRunningMethod.GetType().GetGenericArguments();
             
             if (runningMethodGenerics == null || runningMethodGenerics.Length == 0 || runningMethodGenerics[0] != typeof(T))
             {
-                throw new InvalidOperationException("Cannot get return value for method - specified return type does not match return type of shim.");
+                throw new InvalidOperationException(CannotGetReturnValueNonMatchingTypeError);
             }
 
             var returnValue = ((ShimmedMethod<T>)_currentRunningMethod).ReturnValue;
