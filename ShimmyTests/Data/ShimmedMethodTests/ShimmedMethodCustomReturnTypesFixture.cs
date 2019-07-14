@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Shimmy.Tests.ShimmedMethodTests
+namespace Shimmy.Tests.Data.ShimmedMethodTests
 {
     [TestClass]
     public class ShimmedMethodCustomReturnTypesFixture

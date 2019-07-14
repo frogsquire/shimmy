@@ -57,32 +57,11 @@ namespace Shimmy.Data
                 throw new InvalidOperationException("Cannot get return value for method - specified return type does not match return type of shim.");
             }
 
-            var returnValue = ((ShimmedMethod<T>)_currentRunningMethod).HasCustomReturnValue 
-                ? ((ShimmedMethod<T>)_currentRunningMethod).ReturnValue 
-                : GetDefaultValue<T>();
+            var returnValue = ((ShimmedMethod<T>)_currentRunningMethod).ReturnValue;
 
             ClearRunningMethod();
 
             return returnValue;
-        }
-
-        private static T GetDefaultValue<T>()
-        {
-            var returnType = typeof(T);
-
-            // if it's a value type, or an object with parameters in the constructor
-            // todo: investigate circular reference issue in object with params in constructor
-            // todo: add tests for this case
-            if (returnType.IsValueType || returnType.GetConstructor(Type.EmptyTypes) == null)
-            {
-                return default(T);
-            }
-            // if this is a reference type, and there is a parameterless constructor
-            // build an empty new object and return that
-            else
-            {
-                return Activator.CreateInstance<T>();
-            }
         }
     }
 }

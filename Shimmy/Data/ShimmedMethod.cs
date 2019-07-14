@@ -185,16 +185,17 @@ namespace Shimmy.Data
     {
         public T ReturnValue { get; set; }
 
-        public bool HasCustomReturnValue => !EqualityComparer<T>.Default.Equals(ReturnValue, default(T));
+        private bool ReturnValueIsDefaultForType => !EqualityComparer<T>.Default.Equals(ReturnValue, default(T));
 
         public ShimmedMethod(MethodInfo method) : base(method)
         {
+            ReturnValue = GetDefaultValue();
+            Init(method); 
         }
 
         public ShimmedMethod(MethodInfo method, T returnValue) : base()
         {
             ReturnValue = returnValue;
-
             // init must be second so method generation will check for return value
             Init(method);
         }
@@ -206,7 +207,7 @@ namespace Shimmy.Data
 
         private Delegate GetShimActionWithReturn()
         {
-            if(!_expressionParameters.Any() && Method.IsStatic && !HasCustomReturnValue)
+            if(!_expressionParameters.Any() && Method.IsStatic && !ReturnValueIsDefaultForType)
                 return (Func<T>)(() => LogAndReturn());
 
             return GenerateDynamicShim(typeof(T));
@@ -224,6 +225,25 @@ namespace Shimmy.Data
                 throw new InvalidOperationException(string.Format(InvalidReturnTypeError, value.GetType(), typeof(T)));
 
             ReturnValue = (T)value;    
+        }
+
+        private static T GetDefaultValue()
+        {
+            var returnType = typeof(T);
+
+            // if it's a value type, or an object with parameters in the constructor
+            // todo: investigate circular reference issue in object with params in constructor
+            // todo: add tests for this case
+            if (returnType.IsValueType || returnType.GetConstructor(Type.EmptyTypes) == null)
+            {
+                return default(T);
+            }
+            // if this is a reference type, and there is a parameterless constructor
+            // build an empty new object and return that
+            else
+            {
+                return Activator.CreateInstance<T>();
+            }
         }
     }
 }

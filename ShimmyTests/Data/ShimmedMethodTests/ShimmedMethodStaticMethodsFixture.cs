@@ -6,7 +6,7 @@ using System.Linq;
 using Shimmy.Tests.SharedTestClasses;
 using Shimmy.Data;
 
-namespace Shimmy.Tests.ShimmedMethodTests
+namespace Shimmy.Tests.Data.ShimmedMethodTests
 {
     [TestClass]
     public class ShimmedMethodStaticMethodsFixture
