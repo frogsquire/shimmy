@@ -1,3 +1,7 @@
+This is the license for Pose, a component of Shimmy.
+
+View the original Pose repository at [https://github.com/tonerdo/pose](https://github.com/tonerdo/pose).
+
 The MIT License (MIT)
 
 Copyright (c) 2017 Toni Solarin-Sodara
