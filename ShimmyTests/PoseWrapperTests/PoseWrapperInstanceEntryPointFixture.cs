@@ -99,7 +99,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Shims_And_Executes_From_Instance_Call_And_Returns_Value_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
-            var wrapper = new PoseWrapper<int>((Func<int>)a.MethodWithReturn, null);
+            var wrapper = new PoseWrapper<int>((Func<int>)a.MethodWithReturn, null, WrapperOptions.None);
 
             var beforeDateTime = DateTime.Now;
             var result = wrapper.Execute();
@@ -216,7 +216,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Param_And_Returns_Value_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
-            var wrapper = new PoseWrapper<int>((Func<int, int>)a.MethodWithParamAndReturn, null);
+            var wrapper = new PoseWrapper<int>((Func<int, int>)a.MethodWithParamAndReturn);
 
             var beforeDateTime = DateTime.Now;
             var result = wrapper.Execute(new object[] { 5 });
@@ -246,7 +246,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Multi_Params_And_Returns_Value_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
-            var wrapper = new PoseWrapper<int>((Func<int, int, int>)a.MethodWithParamsAndReturn, null);
+            var wrapper = new PoseWrapper<int>((Func<int, int, int>)a.MethodWithParamsAndReturn);
 
             var beforeDateTime = DateTime.Now;
             var result = wrapper.Execute(new object[] { 5, 6 });
@@ -277,7 +277,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Params_And_Returns_Reference_Type_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
-            var wrapper = new PoseWrapper<List<int>>((Func<int, int, List<int>>)a.MethodWithParamsAndReferenceTypeReturn, null);
+            var wrapper = new PoseWrapper<List<int>>((Func<int, int, List<int>>)a.MethodWithParamsAndReferenceTypeReturn);
 
             var beforeDateTime = DateTime.Now;
             var result = wrapper.Execute(new object[] { 5, 6 });
@@ -308,7 +308,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Reference_Type_Param_And_Returns_Reference_Type_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
-            var wrapper = new PoseWrapper<List<int>>((Func<List<int>, List<int>>)a.MethodWithReferenceTypeParamsAndReturn, null);
+            var wrapper = new PoseWrapper<List<int>>((Func<List<int>, List<int>>)a.MethodWithReferenceTypeParamsAndReturn);
 
             var beforeDateTime = DateTime.Now;
             var result = wrapper.Execute(new object[] { new List<int> { 4, 3, 2 } });
@@ -338,7 +338,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Multi_Params_And_Returns_Reference_Type_Calling_Static_Method()
         {
             var a = new TestClassCallingStatic();
-            var wrapper = new PoseWrapper<List<int>>((Func<List<int>, string, DateTime, List<int>>)a.MethodWithMultiReferenceTypeParamsAndReturn, null);
+            var wrapper = new PoseWrapper<List<int>>((Func<List<int>, string, DateTime, List<int>>)a.MethodWithMultiReferenceTypeParamsAndReturn);
 
             var beforeDateTime = DateTime.Now;
             var result = wrapper.Execute(new object[] { new List<int> { 4, 3, 2 }, "bird", DateTime.Today });
@@ -476,7 +476,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Shims_And_Executes_From_Instance_Call_And_Returns_Value_Calling_Instance_Method()
         {
             var a = new TestClassCallingInstance();
-            var wrapper = new PoseWrapper<int>((Func<int>)a.MethodWithReturn, null);
+            var wrapper = new PoseWrapper<int>((Func<int>)a.MethodWithReturn);
 
             var beforeDateTime = DateTime.Now;
             var result = wrapper.Execute();
@@ -602,7 +602,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Param_And_Returns_Value_Calling_Instance_Method()
         {
             var a = new TestClassCallingInstance();
-            var wrapper = new PoseWrapper<int>((Func<int, int>)a.MethodWithParamAndReturn, null);
+            var wrapper = new PoseWrapper<int>((Func<int, int>)a.MethodWithParamAndReturn);
 
             var beforeDateTime = DateTime.Now;
             var result = wrapper.Execute(new object[] { 5 });
@@ -635,7 +635,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Multi_Params_And_Returns_Value_Calling_Instance_Method()
         {
             var a = new TestClassCallingInstance();
-            var wrapper = new PoseWrapper<int>((Func<int, int, int>)a.MethodWithParamsAndReturn, null);
+            var wrapper = new PoseWrapper<int>((Func<int, int, int>)a.MethodWithParamsAndReturn);
 
             var beforeDateTime = DateTime.Now;
             var result = wrapper.Execute(new object[] { 5, 6 });
@@ -669,7 +669,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Params_And_Returns_Reference_Type_Calling_Instance_Method()
         {
             var a = new TestClassCallingInstance();
-            var wrapper = new PoseWrapper<List<int>>((Func<int, int, List<int>>)a.MethodWithParamsAndReferenceTypeReturn, null);
+            var wrapper = new PoseWrapper<List<int>>((Func<int, int, List<int>>)a.MethodWithParamsAndReferenceTypeReturn);
 
             var beforeDateTime = DateTime.Now;
             var result = wrapper.Execute(new object[] { 5, 6 });
@@ -703,7 +703,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Reference_Type_Param_And_Returns_Reference_Type_Calling_Instance_Method()
         {
             var a = new TestClassCallingInstance();
-            var wrapper = new PoseWrapper<List<int>>((Func<List<int>, List<int>>)a.MethodWithReferenceTypeParamsAndReturn, null);
+            var wrapper = new PoseWrapper<List<int>>((Func<List<int>, List<int>>)a.MethodWithReferenceTypeParamsAndReturn);
 
             var beforeDateTime = DateTime.Now;
             var result = wrapper.Execute(new object[] { new List<int> { 4, 3, 2 } });
@@ -736,7 +736,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Shims_And_Executes_From_Instance_Call_With_Multi_Params_And_Returns_Reference_Type_Calling_Instance_Method()
         {
             var a = new TestClassCallingInstance();
-            var wrapper = new PoseWrapper<List<int>>((Func<List<int>, string, DateTime, List<int>>)a.MethodWithMultiReferenceTypeParamsAndReturn, null);
+            var wrapper = new PoseWrapper<List<int>>((Func<List<int>, string, DateTime, List<int>>)a.MethodWithMultiReferenceTypeParamsAndReturn);
 
             var beforeDateTime = DateTime.Now;
             var result = wrapper.Execute(new object[] { new List<int> { 4, 3, 2 }, "bird", DateTime.Today });

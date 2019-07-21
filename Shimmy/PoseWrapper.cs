@@ -14,6 +14,10 @@ namespace Shimmy
 {
     public class PoseWrapper
     {
+        public const string CouldNotFindMatchingShimError = "No shim matching {0} could be found.";
+
+        public WrapperOptions Options { get; private set; }
+
         internal HashSet<ShimmedMethod> _shimmedMethods;
 
         internal ParameterInfo[] _entryPointParameters;
@@ -28,21 +32,32 @@ namespace Shimmy
 
         public PoseWrapper(Action entryPoint)
         {
-            Init(entryPoint);
+            Init(entryPoint, WrapperOptions.None);
+        }
+
+        public PoseWrapper(Action entryPoint, WrapperOptions options)
+        {
+            Init(entryPoint, options);
         }
 
         public PoseWrapper(Delegate entryPoint)
         {
-            Init(entryPoint);
+            Init(entryPoint, WrapperOptions.None);
         }
 
-        public PoseWrapper(Delegate entryPoint, Type returnType = null, Type entryPointType = null, ParameterInfo[] entryPointParameters = null)
+        public PoseWrapper(Delegate entryPoint, WrapperOptions options)
         {
-            Init(entryPoint, returnType, entryPointType, entryPointParameters);
+            Init(entryPoint, options);
+        }
+
+        public PoseWrapper(Delegate entryPoint, Type returnType = null, Type entryPointType = null, ParameterInfo[] entryPointParameters = null, WrapperOptions options = WrapperOptions.None)
+        {
+            Init(entryPoint, options, returnType, entryPointType, entryPointParameters);
         }        
 
-        private void Init(Delegate entryPoint, Type returnType = null, Type entryPointType = null, ParameterInfo[] entryPointParameters = null)
+        private void Init(Delegate entryPoint, WrapperOptions options, Type returnType = null, Type entryPointType = null, ParameterInfo[] entryPointParameters = null)
         {
+            Options = options;
             _entryPoint = entryPoint ?? throw new ArgumentException("Cannot convert entryPoint to Action. Did you mean to use PoseWrapper<>?");
             _entryPointParameters = entryPointParameters ?? entryPoint.Method.GetParameters();
             _entryPointType = entryPointType 
@@ -120,7 +135,7 @@ namespace Shimmy
             return _shimmedMethods.Select(sm => sm.Shim).ToArray();
         }
 
-        private static List<MethodInfo> GetMethodCallsInEntryPoint(Delegate entryPoint)
+        private List<MethodInfo> GetMethodCallsInEntryPoint(Delegate entryPoint)
         {
             var instructions = entryPoint.GetMethodInfo().GetInstructions();
             var memberInfos = instructions.Where(i => i.OpCode.OperandType == OperandType.InlineMethod)
@@ -128,7 +143,10 @@ namespace Shimmy
 
             // todo: constructors
             return memberInfos.Where(mi => mi.MemberType == MemberTypes.Method)
-                .Select(mi => mi as MethodInfo).ToList();
+                .Select(mi => mi as MethodInfo)
+                .Where(mi => !Exceptions.Contains(mi)
+                            && (Options.HasFlag(WrapperOptions.ShimSpecialNames) || !mi.IsSpecialName))
+                .ToList();
         }
 
         private ShimmedMethod GetShimmedMethod(MethodInfo m)
@@ -183,21 +201,46 @@ namespace Shimmy
 
         public void SetReturn(MethodInfo method, object value)
         {
-            var shimmedMethod = _shimmedMethods.First(sm => sm.Method.Equals(method));
+            var shimmedMethod = _shimmedMethods.FirstOrDefault(sm => sm.Method.Equals(method));
+
+            if (shimmedMethod == null)
+                throw new InvalidOperationException(string.Format(CouldNotFindMatchingShimError, method));
+
             shimmedMethod.SetReturnValue(value);
         }
+
+        // never shim string.concat(); it breaks the + operator
+        // todo: are there other methods in a similar situation?
+        // todo: what if someone wishes to override this?
+        private static List<MethodInfo> MethodsToNeverShim =>
+            typeof(string).GetMethods().Where(m => m.Name.Equals("Concat")).ToList();       
+
+        // todo: add custom exceptions here
+        private static List<MethodInfo> Exceptions => MethodsToNeverShim;
     }
 
     public class PoseWrapper<T> : PoseWrapper
     {
-        public PoseWrapper(Delegate entryPoint, Type entryPointType = null) : base(entryPoint, entryPoint.Method.ReturnType, entryPointType)
+        public PoseWrapper(Delegate entryPoint)
+            : base(entryPoint, 
+                  entryPoint.Method.ReturnType, 
+                  DelegateTypeHelper.GetTypeForDelegate(entryPoint.Method.GetParameters(), entryPoint.Method.ReturnType),
+                  options: WrapperOptions.None)
         {
             if (entryPoint.Method.ReturnType == null || entryPoint.Method.ReturnType != typeof(T))
                 throw new ArgumentException("Return type of entry point and generic type must match.");
-
         }
 
-        public PoseWrapper(Delegate entryPoint, Type returnType = null, Type entryPointType = null, ParameterInfo[] entryPointParameters = null) : base(entryPoint, returnType, entryPointType, entryPointParameters)
+        public PoseWrapper(Delegate entryPoint, Type entryPointType, WrapperOptions options = WrapperOptions.None) 
+            : base(entryPoint, entryPoint.Method.ReturnType, entryPointType, options: options)
+        {
+            if (entryPoint.Method.ReturnType == null || entryPoint.Method.ReturnType != typeof(T))
+                throw new ArgumentException("Return type of entry point and generic type must match.");
+        }
+
+        public PoseWrapper(Delegate entryPoint, Type returnType = null, Type entryPointType = null, 
+                ParameterInfo[] entryPointParameters = null, WrapperOptions options = WrapperOptions.None) 
+            : base(entryPoint, returnType, entryPointType, entryPointParameters, options)
         {
             if (returnType == null || returnType != typeof(T))
                 throw new ArgumentException("Return type of entry point and generic type must match.");

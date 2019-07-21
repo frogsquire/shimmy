@@ -83,6 +83,13 @@ namespace Shimmy.Tests.PoseWrapperTests
             {
                 return GetterSetter;
             }
+
+            public string MethodWithStringConcat()
+            {
+                var string1 = "bird";
+                string1 += "stone";
+                return string1;
+            }
         }
 
         [TestMethod]
@@ -96,7 +103,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_SetReturn_Changes_Value_Of_Correct_Shim_Via_MethodInfo()
         {
             var a = new TestClass();
-            var wrapper = new PoseWrapper<bool>((Func<bool>)a.CallTwoDifferentMethods, null);
+            var wrapper = new PoseWrapper<bool>((Func<bool>)a.CallTwoDifferentMethods, null, WrapperOptions.None);
             var methodInfo1 = typeof(StaticMethodsTestClass).GetMethod("MethodWithParamAndReturn");
             var methodInfo2 = typeof(StaticMethodsTestClass).GetMethod("MethodWithParamsAndReturn");
             wrapper.SetReturn(methodInfo1, 3);
@@ -125,7 +132,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_SetReturn_Changes_Value_Of_Correct_Shim_Via_Method_Name()
         {
             var a = new TestClass();
-            var wrapper = new PoseWrapper<bool>((Func<bool>)a.CallTwoDifferentMethods, null);
+            var wrapper = new PoseWrapper<bool>((Func<bool>)a.CallTwoDifferentMethods, null, WrapperOptions.None);
             var methodInfo1 = typeof(StaticMethodsTestClass).GetMethod("MethodWithParamAndReturn");
             var methodInfo2 = typeof(StaticMethodsTestClass).GetMethod("MethodWithParamsAndReturn");
             wrapper.SetReturn("MethodWithParamAndReturn", 3);
@@ -154,7 +161,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_SetReturn_Changes_Value_Of_Correct_Shim_Via_Method_Name_With_Class_Specifier()
         {
             var a = new TestClass();
-            var wrapper = new PoseWrapper<bool>((Func<bool>)a.CallTwoDifferentMethodsWithSameName, null);
+            var wrapper = new PoseWrapper<bool>((Func<bool>)a.CallTwoDifferentMethodsWithSameName, null, WrapperOptions.None);
             var methodInfo1 = typeof(TestStaticMethodSameNameOne).GetMethod("MethodWithSameName");
             var methodInfo2 = typeof(TestStaticMethodSameNameTwo).GetMethod("MethodWithSameName");
             wrapper.SetReturn("TestStaticMethodSameNameOne.MethodWithSameName", 3);
@@ -180,7 +187,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_SetReturn_Changes_Value_Of_Correct_Shim_On_Function_Call()
         {
             var a = new TestClass();
-            var wrapper = new PoseWrapper<bool>((Func<bool>)a.CallTwoDifferentMethods, null);
+            var wrapper = new PoseWrapper<bool>((Func<bool>)a.CallTwoDifferentMethods, null, WrapperOptions.None);
             var methodInfo1 = typeof(StaticMethodsTestClass).GetMethod("MethodWithParamAndReturn");
             var methodInfo2 = typeof(StaticMethodsTestClass).GetMethod("MethodWithParamsAndReturn");
             wrapper.SetReturn(() => StaticMethodsTestClass.MethodWithParamAndReturn(Pose.Is.A<int>()), 3);
@@ -206,10 +213,28 @@ namespace Shimmy.Tests.PoseWrapperTests
         }
 
         [TestMethod]
-        public void PoseWrapper_SetReturn_Changes_Value_Of_Correct_Shim_On_Getter_Setter()
+        public void PoseWrapper_Does_Not_Shim_Getter_Setter_When_Option_Not_Set()
         {
             var a = new TestClass();
-            var wrapper = new PoseWrapper<int>((Func<int>)a.MethodCallingGetterSetter, null);
+            var wrapper = new PoseWrapper<int>((Func<int>)a.MethodCallingGetterSetter);
+
+            try
+            {
+                wrapper.SetReturn(() => a.GetterSetter, 5);
+                Assert.Fail("Expected exception.");
+            }
+            catch (InvalidOperationException e)
+            {
+                var methodInfo = a.GetType().GetMethod("get_GetterSetter");
+                Assert.AreEqual(e.Message, string.Format(PoseWrapper.CouldNotFindMatchingShimError, methodInfo));
+            }
+        }
+
+        [TestMethod]
+        public void PoseWrapper_SetReturn_Changes_Value_Of_Correct_Shim_On_Getter_Setter_When_Option_Is_Set()
+        {
+            var a = new TestClass();
+            var wrapper = new PoseWrapper<int>((Func<int>)a.MethodCallingGetterSetter, null, WrapperOptions.ShimSpecialNames);
             wrapper.SetReturn(() => a.GetterSetter, 5);
 
             var preCallDateTime = DateTime.Now;
@@ -226,7 +251,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Multiple_Calls_To_Same_Method_Record_Separate_Call_Results()
         {
             var a = new TestClass();
-            var wrapper = new PoseWrapper<int>((Func<int>)a.CallSameMethodMultipleTimes, null);
+            var wrapper = new PoseWrapper<int>((Func<int>)a.CallSameMethodMultipleTimes, null, WrapperOptions.None);
             wrapper.SetReturn("StaticMethodsTestClass.MethodWithParamAndReturn", 1);
             var currentCallDateTime = DateTime.Now;
             var result = wrapper.Execute();
@@ -253,7 +278,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Multiple_Calls_To_Different_Instances_Of_Method_Record_Separate_Call_Results()
         {
             var a = new TestClass();
-            var wrapper = new PoseWrapper<int>((Func<int>)a.CallDifferentInstancesOfSameMethod, null);
+            var wrapper = new PoseWrapper<int>((Func<int>)a.CallDifferentInstancesOfSameMethod, null, WrapperOptions.None);
             wrapper.SetReturn("TestClass.InstanceMethodWithParamAndReturn", 1);
             var preCallDateTime = DateTime.Now;
             var result = wrapper.Execute();
@@ -276,6 +301,16 @@ namespace Shimmy.Tests.PoseWrapperTests
             Assert.AreNotEqual(((TestClass)call1.Parameters[0]).ReferenceGuid, ((TestClass)call2.Parameters[0]).ReferenceGuid);
             Assert.AreEqual(1, (int)call1.Parameters[1]);
             Assert.AreEqual(2, (int)call2.Parameters[1]);
+        }
+
+        [TestMethod]
+        public void PoseWrapper_Does_Not_Shim_String_Concat()
+        {
+            var a = new TestClass();
+            var wrapper = new PoseWrapper<string>((Func<string>)a.MethodWithStringConcat, null, WrapperOptions.None);
+            var result = wrapper.Execute();
+            Assert.AreEqual("birdstone", result);
+            Assert.IsFalse(wrapper.LastExecutionResults.Any());
         }
     }
 }

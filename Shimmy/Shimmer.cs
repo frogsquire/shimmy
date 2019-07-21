@@ -15,22 +15,22 @@ namespace Shimmy
 
         // todo: support constructors, getters vs. setters, etc. from here
         // and from the equivalent for GetPoseWrapper<T>
-        public static PoseWrapper GetPoseWrapper(Expression<Action> expression)
+        public static PoseWrapper GetPoseWrapper(Expression<Action> expression, WrapperOptions options = WrapperOptions.None)
         {
             var method = (MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
             if (instance is Type)
-                return GetPoseWrapper(method);
+                return GetPoseWrapper(method, options);
             else
-                return GetPoseWrapper(method, instance);
+                return GetPoseWrapper(method, instance, options);
         }
 
-        public static PoseWrapper GetPoseWrapper(MethodInfo method, object instance = null)
+        public static PoseWrapper GetPoseWrapper(MethodInfo method, object instance = null, WrapperOptions options = WrapperOptions.None)
         {
             var methodDelegate = GetDelegateFromMethodInfo(method, instance, out Type delegateType);
-            return GetPoseWrapper(methodDelegate, delegateType);
+            return GetPoseWrapper(methodDelegate, delegateType, options);
         }
 
-        public static PoseWrapper GetPoseWrapper(Delegate entryPoint, Type delegateType = null)
+        public static PoseWrapper GetPoseWrapper(Delegate entryPoint, Type delegateType = null, WrapperOptions options = WrapperOptions.None)
         {
             var returnType = entryPoint.Method.ReturnType;
             var parameters = entryPoint.Method.GetParameters();
@@ -40,31 +40,31 @@ namespace Shimmy
 
             if (parameters.Length == 0)
             {
-                return new PoseWrapper(entryPoint);
+                return new PoseWrapper(entryPoint, options);
             }
 
             delegateType = delegateType
                 ?? DelegateTypeHelper.GetTypeForDelegate(parameters, returnType);
 
-            return new PoseWrapper(entryPoint, null, delegateType, parameters);
+            return new PoseWrapper(entryPoint, null, delegateType, parameters, options);
         }
 
-        public static PoseWrapper<T> GetPoseWrapper<T>(Expression<Action> expression)
+        public static PoseWrapper<T> GetPoseWrapper<T>(Expression<Action> expression, WrapperOptions options = WrapperOptions.None)
         {
             var method = (MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
             if (instance is Type)
-                return GetPoseWrapper<T>(method, null);
+                return GetPoseWrapper<T>(method, null, options);
             else
-                return GetPoseWrapper<T>(method, instance);
+                return GetPoseWrapper<T>(method, instance, options);
         }
 
-        public static PoseWrapper<T> GetPoseWrapper<T>(MethodInfo method, object instance = null)
+        public static PoseWrapper<T> GetPoseWrapper<T>(MethodInfo method, object instance = null, WrapperOptions options = WrapperOptions.None)
         {
             var methodDelegate = GetDelegateFromMethodInfo(method, instance, out Type delegateType);
-            return GetPoseWrapper<T>(methodDelegate, delegateType);
+            return GetPoseWrapper<T>(methodDelegate, delegateType, options);
         }
 
-        public static PoseWrapper<T> GetPoseWrapper<T>(Delegate entryPoint, Type delegateType = null)
+        public static PoseWrapper<T> GetPoseWrapper<T>(Delegate entryPoint, Type delegateType = null, WrapperOptions options = WrapperOptions.None)
         {
             var returnType = entryPoint.Method.ReturnType;
             if (returnType == null || returnType != typeof(T))
@@ -75,9 +75,10 @@ namespace Shimmy
             delegateType = delegateType 
                 ?? DelegateTypeHelper.GetTypeForDelegate(parameters, returnType);
 
-            return new PoseWrapper<T>(entryPoint, returnType, delegateType, parameters);
+            return new PoseWrapper<T>(entryPoint, returnType, delegateType, parameters, options);
         }
 
+        // todo: get parameters here to further specify method
         private static Delegate GetDelegateFromMethodInfo(MethodInfo method, object instance, out Type delegateType)
         {
             if (!method.IsStatic && instance == null)

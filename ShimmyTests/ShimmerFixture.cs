@@ -378,7 +378,24 @@ namespace Shimmy.Tests
             Assert.IsNotNull(wrapper.LastExecutionResults);
             Assert.AreEqual(1, wrapper.LastExecutionResults.Count);
             Assert.AreEqual(5, wrapper.LastExecutionResults.First().Value[0].Parameters[0]);
+        }
 
+        [TestMethod]
+        public void GetPoseWrapper_Generates_Method_With_Specific_Options_When_Provided_On_Wrapper_Without_Return()
+        {
+            var a = new InstanceTestClass();
+            var methodInfo = a.GetType().GetMethod("MethodWithParamAndReturn");
+            var wrapper = Shimmer.GetPoseWrapper<int>(methodInfo, a, WrapperOptions.ShimSpecialNames);
+            Assert.AreEqual(WrapperOptions.ShimSpecialNames, wrapper.Options);
+        }
+
+        [TestMethod]
+        public void GetPoseWrapper_Generates_Method_With_Specific_Options_When_Provided_On_Wrapper_With_Return()
+        {
+            var a = new InstanceTestClass();
+            var methodInfo = a.GetType().GetMethod("VoidMethod");
+            var wrapper = Shimmer.GetPoseWrapper(methodInfo, a, WrapperOptions.ShimSpecialNames);
+            Assert.AreEqual(WrapperOptions.ShimSpecialNames, wrapper.Options);
         }
     }
 }
