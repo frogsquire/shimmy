@@ -11,7 +11,7 @@ namespace Shimmy.Data
      * 
      * TODO: support clearing of the library.
      */
-    internal static class ShimmedMethodLibrary
+    public static class ShimmedMethodLibrary
     {
         public const string CannotGetReturnValueNoMethodRunningError = "Cannot get return value for method - no shim is running.";
         public const string CannotGetReturnValueNonMatchingTypeError = "Cannot get return value for method - specified return type does not match return type of shim.";
