@@ -10,6 +10,7 @@ namespace Shimmy.Data
      * have a non-void return type.
      * 
      * TODO: support clearing of the library.
+     * TODO: integrity issues around this class being public?
      */
     public static class ShimmedMethodLibrary
     {
@@ -26,7 +27,6 @@ namespace Shimmy.Data
             return referenceGuid;
         }
 
-        // todo: make these internal for safety
         public static void SetRunningMethod(string referenceGuidString)
         {
             var referenceGuid = Guid.Parse(referenceGuidString);

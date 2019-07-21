@@ -154,6 +154,12 @@ namespace Shimmy
             SetReturn(methodInfo, value);
         }
 
+        public void SetReturn<T>(Expression<Func<T>> expression, object value)
+        {
+            var methodInfo = (MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
+            SetReturn(methodInfo, value);
+        }
+
         /*
          * Accepts methods in the form:
          *  "methodName"

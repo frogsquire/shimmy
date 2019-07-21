@@ -34,6 +34,8 @@ namespace Shimmy.Tests.PoseWrapperTests
         {
             public Guid ReferenceGuid = Guid.NewGuid();
 
+            public int GetterSetter { get; set; }
+
             public int InstanceMethodWithParamAndReturn(int a)
             {
                 throw new NotImplementedException("Intentionally unimplemented.");
@@ -75,6 +77,11 @@ namespace Shimmy.Tests.PoseWrapperTests
                 var instance1 = new TestClass();
                 var instance2 = new TestClass();
                 return instance1.InstanceMethodWithParamAndReturn(1) + instance2.InstanceMethodWithParamAndReturn(2);
+            }
+
+            public int MethodCallingGetterSetter()
+            {
+                return GetterSetter;
             }
         }
 
@@ -170,7 +177,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         }
 
         [TestMethod]
-        public void PoseWrapper_SetReturn_Changes_Value_Of_Correct_Shim_Via_Expression()
+        public void PoseWrapper_SetReturn_Changes_Value_Of_Correct_Shim_On_Function_Call()
         {
             var a = new TestClass();
             var wrapper = new PoseWrapper<bool>((Func<bool>)a.CallTwoDifferentMethods, null);
@@ -196,6 +203,23 @@ namespace Shimmy.Tests.PoseWrapperTests
             Assert.AreEqual(5, (int)resultsMethodWithParamAndReturnData.Parameters[0]);
             Assert.AreEqual(7, (int)resultsMethodWithParamsAndReturnData.Parameters[0]);
             Assert.AreEqual(1, (int)resultsMethodWithParamsAndReturnData.Parameters[1]);
+        }
+
+        [TestMethod]
+        public void PoseWrapper_SetReturn_Changes_Value_Of_Correct_Shim_On_Getter_Setter()
+        {
+            var a = new TestClass();
+            var wrapper = new PoseWrapper<int>((Func<int>)a.MethodCallingGetterSetter, null);
+            wrapper.SetReturn(() => a.GetterSetter, 5);
+
+            var preCallDateTime = DateTime.Now;
+            var result = wrapper.Execute();
+            Assert.AreEqual(result, 5);
+
+            Assert.AreEqual(1, wrapper.LastExecutionResults.Count);
+            var resultsGetterSetter = wrapper.LastExecutionResults.First(ler => ler.Key.Name.Equals("get_GetterSetter")).Value;
+            Assert.AreEqual(1, resultsGetterSetter.Count);
+            Assert.IsTrue(resultsGetterSetter.First().CalledAt > preCallDateTime);
         }
 
         [TestMethod]

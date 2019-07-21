@@ -101,6 +101,7 @@ public void TestMethod()
   Assert.IsTrue(resultsForMethod[1].CalledAt > resultsForMethod[0].CalledAt);
 }
 
+Note that for getters and setters, when matching on method name (as opposed to method info), the name is prefixed with "get_" or "set_" for the respective action.
 
 ```
 
@@ -167,6 +168,7 @@ Further, Shimmy is still alpha-level software.
 ## Roadmap
 
 A complete roadmap with GitHub issues is coming soon. Short-term goals include:
+* Simplifying syntax for interrogating last execution results
 * Support for specifying custom return for shims based on:
   * How many times a method has been called
   * The values of the parameters passed to the method
