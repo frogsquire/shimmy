@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Shimmy
 {
-    public static class Shimmy
+    public static class Shimmer
     {
         public const string ReturnlessWrapperInvalidDelegate 
             = "Cannot generate a returnless PoseWrapper for an entry point with a non-void return type. Use GetPoseWrapper<T> instead.";

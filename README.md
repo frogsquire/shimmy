@@ -13,45 +13,45 @@ Like Pose, Shimmy is based on .NET Standard 2.0 and can be used across .NET plat
 
 Include Shimmy in your project, and then, in your tests, ask Shimmy to build a Pose wrapper for your method under test by passing it an expression:
 ```c#
-var wrapper = Shimmy.GetPoseWrapper(() => MyTestClass.AStaticMethod());
+var wrapper = Shimmer.GetPoseWrapper(() => MyTestClass.AStaticMethod());
 ```
 
 or a MethodInfo object:
 ```c#
 var methodInfo = typeof(MyTestClass).GetMethod("AStaticMethod");
-var wrapper = Shimmy.GetPoseWrapper(methodInfo);
+var wrapper = Shimmer.GetPoseWrapper(methodInfo);
 ```
 
 or a delegate: 
 ```c#
-var wrapper = Shimmy.GetPoseWrapper((Action)MyTestClass.AStaticMethod);
+var wrapper = Shimmer.GetPoseWrapper((Action)MyTestClass.AStaticMethod);
 ```
 
 If your method has a return type, provide it as a generic parameter when using any of the three styles above:
 ```c#
-var wrapper = Shimmy.GetPoseWrapper<int>(() => MyTestClass.MethodWithReturn());
+var wrapper = Shimmer.GetPoseWrapper<int>(() => MyTestClass.MethodWithReturn());
 
-var wrapper = Shimmy.GetPoseWrapper<int>((Func<int>)MyTestClass.MethodWithReturn);
+var wrapper = Shimmer.GetPoseWrapper<int>((Func<int>)MyTestClass.MethodWithReturn);
 
 var methodInfo = typeof(MyTestClass).GetMethod("MethodWithReturn");
-var wrapper = Shimmy.GetPoseWrapper<int>(methodInfo);
+var wrapper = Shimmer.GetPoseWrapper<int>(methodInfo);
 ```
 
 If your method has parameters, and you are using the expression style, provide them with Pose.Is.A() or default():
 ```c#
-var wrapper = Shimmy.GetPoseWrapper<int>(() => MyTestClass.MethodWithParametersAndReturn(Pose.Is.A<string>()));
-var wrapper = Shimmy.GetPoseWrapper<int>(() => MyTestClass.MethodWithParametersAndReturn(default(string));
+var wrapper = Shimmer.GetPoseWrapper<int>(() => MyTestClass.MethodWithParametersAndReturn(Pose.Is.A<string>()));
+var wrapper = Shimmer.GetPoseWrapper<int>(() => MyTestClass.MethodWithParametersAndReturn(default(string));
 ```
 
 For instance methods, simply provide the instance:
 ```c#
 var anInstance = new MyTestClass();
-var wrapper = Shimmy.GetPoseWrapper<int>(() => anInstance.InstanceTestMethod());
+var wrapper = Shimmer.GetPoseWrapper<int>(() => anInstance.InstanceTestMethod());
 
-var wrapper = Shimmy.GetPoseWrapper<int>((Func<int>)anInstance.InstanceTestMethod);
+var wrapper = Shimmer.GetPoseWrapper<int>((Func<int>)anInstance.InstanceTestMethod);
 
 var methodInfo = typeof(MyTestClass).GetMethod("InstanceTestMethod");
-var wrapper = Shimmy.GetPoseWrapper<int>(methodInfo, anInstance);
+var wrapper = Shimmer.GetPoseWrapper<int>(methodInfo, anInstance);
 ```
 
 ### Then, configure return values
@@ -62,14 +62,14 @@ wrapper.SetReturn(() => MyTestClass.AMethodCalledInMethodUnderTest()), value);
 ```
 where value is the desired return value.
 
-Return values can be set using expressions, MethodInfo objects, or delegates, using the same syntax as Shimmy.GetPoseWrapper() above. However, instances need not be specific, and may also use Pose.Is.A() or default().
+Return values can be set using expressions, MethodInfo objects, or delegates, using the same syntax as Shimmer.GetPoseWrapper() above. However, instances need not be specific, and may also use Pose.Is.A() or default().
 
 ### Execute your method through its wrapper
 
 Simply call `wrapper.Execute`, passing parameters to be passed to your method:
 ```c#
 var anInstance = new MyTestClass();
-var wrapper = Shimmy.GetPoseWrapper<int>(() => anInstance.InstanceTestMethodWithIntParam(Pose.Is.A<int>()));
+var wrapper = Shimmer.GetPoseWrapper<int>(() => anInstance.InstanceTestMethodWithIntParam(Pose.Is.A<int>()));
 var result = wrapper.Execute(5);
 ```
 
@@ -84,7 +84,7 @@ So, suppose `InstanceTestMethodWithIntParam` calls `MyTestClass.AStaticMethodWit
 public void TestMethod() 
 {
   var anInstance = new MyTestClass();
-  var wrapper = Shimmy.GetPoseWrapper<int>(() => anInstance.InstanceTestMethodWithIntParam(Pose.Is.A<int>()));
+  var wrapper = Shimmer.GetPoseWrapper<int>(() => anInstance.InstanceTestMethodWithIntParam(Pose.Is.A<int>()));
   wrapper.SetReturn(() => MyTestClass.AStaticMethodWithStringReturn(Pose.Is.A<int>()), "bird");
   var result = wrapper.Execute(5);
 
@@ -126,7 +126,7 @@ class MyTestClass
 public void TestMethod() 
 {
   var anInstance = new MyTestClass();
-  var wrapper = Shimmy.GetPoseWrapper<int>(() => anInstance.InstanceTestMethodWithIntParam(Pose.Is.A<int>()));
+  var wrapper = Shimmer.GetPoseWrapper<int>(() => anInstance.InstanceTestMethodWithIntParam(Pose.Is.A<int>()));
   wrapper.SetReturn(() => MyTestClass.AStaticMethodWithStringReturn(Pose.Is.A<int>()), "bird");
   var result = wrapper.Execute(5);
 

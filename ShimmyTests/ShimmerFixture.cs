@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 namespace Shimmy.Tests
 {
     [TestClass]
-    public class ShimmyFixture
+    public class ShimmerFixture
     {
         private static class StaticTestClass
         {
@@ -61,12 +61,12 @@ namespace Shimmy.Tests
             try
             {
                 var badDelegate = typeof(StaticTestClass).GetMethod("MethodWithReturn").CreateDelegate(typeof(Func<int>));
-                var wrapper = Shimmy.GetPoseWrapper(badDelegate);
+                var wrapper = Shimmer.GetPoseWrapper(badDelegate);
                 Assert.Fail("Expected ArgumentException.");
             }
             catch(ArgumentException e)
             {
-                Assert.AreEqual(Shimmy.ReturnlessWrapperInvalidDelegate, e.Message);
+                Assert.AreEqual(Shimmer.ReturnlessWrapperInvalidDelegate, e.Message);
             }
         }
 
@@ -76,12 +76,12 @@ namespace Shimmy.Tests
             try
             {
                 var badDelegate = typeof(StaticTestClass).GetMethod("MethodWithReturn").CreateDelegate(typeof(Func<int>));
-                var wrapper = Shimmy.GetPoseWrapper<string>(badDelegate);
+                var wrapper = Shimmer.GetPoseWrapper<string>(badDelegate);
                 Assert.Fail("Expected ArgumentException.");
             }
             catch (ArgumentException e)
             {
-                Assert.AreEqual(Shimmy.NonMatchingReturnType, e.Message);
+                Assert.AreEqual(Shimmer.NonMatchingReturnType, e.Message);
             }
         }
 
@@ -90,12 +90,12 @@ namespace Shimmy.Tests
         {
             try
             {
-                var wrapper = Shimmy.GetPoseWrapper(() => StaticTestClass.MethodWithReturn());
+                var wrapper = Shimmer.GetPoseWrapper(() => StaticTestClass.MethodWithReturn());
                 Assert.Fail("Expected ArgumentException.");
             }
             catch (ArgumentException e)
             {
-                Assert.AreEqual(Shimmy.ReturnlessWrapperInvalidDelegate, e.Message);
+                Assert.AreEqual(Shimmer.ReturnlessWrapperInvalidDelegate, e.Message);
             }
         }
 
@@ -104,12 +104,12 @@ namespace Shimmy.Tests
         {
             try
             {
-                var wrapper = Shimmy.GetPoseWrapper<string>(() => StaticTestClass.VoidMethod());
+                var wrapper = Shimmer.GetPoseWrapper<string>(() => StaticTestClass.VoidMethod());
                 Assert.Fail("Expected ArgumentException.");
             }
             catch (ArgumentException e)
             {
-                Assert.AreEqual(Shimmy.NonMatchingReturnType, e.Message);
+                Assert.AreEqual(Shimmer.NonMatchingReturnType, e.Message);
             }
         }
 
@@ -119,12 +119,12 @@ namespace Shimmy.Tests
             try
             {
                 var methodInfo = typeof(StaticTestClass).GetMethod("MethodWithReturn");
-                var wrapper = Shimmy.GetPoseWrapper(methodInfo);
+                var wrapper = Shimmer.GetPoseWrapper(methodInfo);
                 Assert.Fail("Expected ArgumentException.");
             }
             catch (ArgumentException e)
             {
-                Assert.AreEqual(Shimmy.ReturnlessWrapperInvalidDelegate, e.Message);
+                Assert.AreEqual(Shimmer.ReturnlessWrapperInvalidDelegate, e.Message);
             }
         }
 
@@ -134,19 +134,19 @@ namespace Shimmy.Tests
             try
             {
                 var methodInfo = typeof(StaticTestClass).GetMethod("VoidMethod");
-                var wrapper = Shimmy.GetPoseWrapper<string>(methodInfo);
+                var wrapper = Shimmer.GetPoseWrapper<string>(methodInfo);
                 Assert.Fail("Expected ArgumentException.");
             }
             catch (ArgumentException e)
             {
-                Assert.AreEqual(Shimmy.NonMatchingReturnType, e.Message);
+                Assert.AreEqual(Shimmer.NonMatchingReturnType, e.Message);
             }
         }
 
         [TestMethod]
         public void GetPoseWrapper_From_Delegate_Returns_New_PoseWrapper_For_Parameterless_Method()
         {
-            var wrapper = Shimmy.GetPoseWrapper((Action)StaticTestClass.VoidMethod);
+            var wrapper = Shimmer.GetPoseWrapper((Action)StaticTestClass.VoidMethod);
             Assert.IsNotNull(wrapper);
             wrapper.Execute();
             Assert.IsNotNull(wrapper.LastExecutionResults);
@@ -156,7 +156,7 @@ namespace Shimmy.Tests
         [TestMethod]
         public void GetPoseWrapper_From_Delegate_Returns_New_PoseWrapper_For_Method_With_Parameters()
         {
-            var wrapper = Shimmy.GetPoseWrapper((Action<int>)StaticTestClass.MethodWithValueTypeParam);
+            var wrapper = Shimmer.GetPoseWrapper((Action<int>)StaticTestClass.MethodWithValueTypeParam);
             Assert.IsNotNull(wrapper);
             wrapper.Execute(5);
             Assert.IsNotNull(wrapper.LastExecutionResults);
@@ -167,7 +167,7 @@ namespace Shimmy.Tests
         [TestMethod]
         public void GetPoseWrapper_T_From_Delegate_Returns_New_Pose_Wrapper_For_Method_With_Appropriate_Return_Type()
         {
-            var wrapper = Shimmy.GetPoseWrapper<int>((Func<int>)StaticTestClass.MethodWithReturn);
+            var wrapper = Shimmer.GetPoseWrapper<int>((Func<int>)StaticTestClass.MethodWithReturn);
             Assert.IsNotNull(wrapper);
             var result = wrapper.Execute();
             Assert.AreEqual(0, result);
@@ -178,7 +178,7 @@ namespace Shimmy.Tests
         [TestMethod]
         public void GetPoseWrapper_T_From_Delegate_Returns_New_Pose_Wrapper_For_Method_With_Appropriate_Return_Type_And_Parameters()
         {
-            var wrapper = Shimmy.GetPoseWrapper<int>((Func<int, int>)StaticTestClass.MethodWithParamAndReturn);
+            var wrapper = Shimmer.GetPoseWrapper<int>((Func<int, int>)StaticTestClass.MethodWithParamAndReturn);
             Assert.IsNotNull(wrapper);
             var result = wrapper.Execute(5);
             Assert.AreEqual(0, result);
@@ -190,7 +190,7 @@ namespace Shimmy.Tests
         [TestMethod]
         public void GetPoseWrapper_Generates_Wrapper_From_Expression()
         {
-            var wrapper = Shimmy.GetPoseWrapper(() => StaticTestClass.VoidMethod());
+            var wrapper = Shimmer.GetPoseWrapper(() => StaticTestClass.VoidMethod());
             Assert.IsNotNull(wrapper);
             wrapper.Execute();
             Assert.IsNotNull(wrapper.LastExecutionResults);
@@ -200,7 +200,7 @@ namespace Shimmy.Tests
         [TestMethod]
         public void GetPoseWrapper_Generates_Wrapper_From_Expression_With_Return()
         {
-            var wrapper = Shimmy.GetPoseWrapper<int>(() => StaticTestClass.MethodWithReturn());
+            var wrapper = Shimmer.GetPoseWrapper<int>(() => StaticTestClass.MethodWithReturn());
             Assert.IsNotNull(wrapper);
             var result = wrapper.Execute();
             Assert.AreEqual(0, result);
@@ -211,7 +211,7 @@ namespace Shimmy.Tests
         [TestMethod]
         public void GetPoseWrapper_Generates_Wrapper_From_Expression_With_Parameters()
         {
-            var wrapper = Shimmy.GetPoseWrapper(() => StaticTestClass.MethodWithValueTypeParam(default(int)));
+            var wrapper = Shimmer.GetPoseWrapper(() => StaticTestClass.MethodWithValueTypeParam(default(int)));
             Assert.IsNotNull(wrapper);
             wrapper.Execute(5);
             Assert.IsNotNull(wrapper.LastExecutionResults);
@@ -222,7 +222,7 @@ namespace Shimmy.Tests
         [TestMethod]
         public void GetPoseWrapper_Generates_Wrapper_From_Expression_With_Parameters_And_Return()
         {
-            var wrapper = Shimmy.GetPoseWrapper<int>(() => StaticTestClass.MethodWithParamAndReturn(default(int)));
+            var wrapper = Shimmer.GetPoseWrapper<int>(() => StaticTestClass.MethodWithParamAndReturn(default(int)));
             Assert.IsNotNull(wrapper);
             var result = wrapper.Execute(5);
             Assert.AreEqual(0, result);
@@ -235,7 +235,7 @@ namespace Shimmy.Tests
         public void GetPoseWrapper_Generates_Wrapper_From_Method()
         {
             var methodInfo = typeof(StaticTestClass).GetMethod("VoidMethod");
-            var wrapper = Shimmy.GetPoseWrapper(methodInfo);
+            var wrapper = Shimmer.GetPoseWrapper(methodInfo);
             Assert.IsNotNull(wrapper);
             wrapper.Execute();
             Assert.IsNotNull(wrapper.LastExecutionResults);
@@ -246,7 +246,7 @@ namespace Shimmy.Tests
         public void GetPoseWrapper_Generates_Wrapper_From_Method_With_Return()
         {
             var methodInfo = typeof(StaticTestClass).GetMethod("MethodWithReturn");
-            var wrapper = Shimmy.GetPoseWrapper<int>(methodInfo);
+            var wrapper = Shimmer.GetPoseWrapper<int>(methodInfo);
             Assert.IsNotNull(wrapper);
             var result = wrapper.Execute();
             Assert.AreEqual(0, result);
@@ -258,7 +258,7 @@ namespace Shimmy.Tests
         public void GetPoseWrapper_Generates_Wrapper_From_Method_With_Parameters()
         {
             var methodInfo = typeof(StaticTestClass).GetMethod("MethodWithValueTypeParam");
-            var wrapper = Shimmy.GetPoseWrapper(methodInfo);
+            var wrapper = Shimmer.GetPoseWrapper(methodInfo);
             Assert.IsNotNull(wrapper);
             wrapper.Execute(5);
             Assert.IsNotNull(wrapper.LastExecutionResults);
@@ -270,7 +270,7 @@ namespace Shimmy.Tests
         public void GetPoseWrapper_Generates_Wrapper_From_Method_With_Parameters_And_Return()
         {
             var methodInfo = typeof(StaticTestClass).GetMethod("MethodWithParamAndReturn");
-            var wrapper = Shimmy.GetPoseWrapper<int>(methodInfo);
+            var wrapper = Shimmer.GetPoseWrapper<int>(methodInfo);
             Assert.IsNotNull(wrapper);
             var result = wrapper.Execute(5);
             Assert.AreEqual(0, result);
@@ -283,7 +283,7 @@ namespace Shimmy.Tests
         public void GetPoseWrapper_Generates_Wrapper_From_Instance_Expression()
         {
             var a = new InstanceTestClass();
-            var wrapper = Shimmy.GetPoseWrapper(() => a.VoidMethod());
+            var wrapper = Shimmer.GetPoseWrapper(() => a.VoidMethod());
             Assert.IsNotNull(wrapper);
             wrapper.Execute();
             Assert.IsNotNull(wrapper.LastExecutionResults);
@@ -294,7 +294,7 @@ namespace Shimmy.Tests
         public void GetPoseWrapper_Generates_Wrapper_From_Instance_Expression_With_Return()
         {
             var a = new InstanceTestClass();
-            var wrapper = Shimmy.GetPoseWrapper<int>(() => a.MethodWithReturn());
+            var wrapper = Shimmer.GetPoseWrapper<int>(() => a.MethodWithReturn());
             Assert.IsNotNull(wrapper);
             var result = wrapper.Execute();
             Assert.AreEqual(0, result);
@@ -306,7 +306,7 @@ namespace Shimmy.Tests
         public void GetPoseWrapper_Generates_Wrapper_From_Instance_Expression_With_Parameters()
         {
             var a = new InstanceTestClass();
-            var wrapper = Shimmy.GetPoseWrapper(() => a.MethodWithValueTypeParam(default(int)));
+            var wrapper = Shimmer.GetPoseWrapper(() => a.MethodWithValueTypeParam(default(int)));
             Assert.IsNotNull(wrapper);
             wrapper.Execute(5);
             Assert.IsNotNull(wrapper.LastExecutionResults);
@@ -318,7 +318,7 @@ namespace Shimmy.Tests
         public void GetPoseWrapper_Generates_Wrapper_From_Instance_Expression_With_Parameters_And_Return()
         {
             var a = new InstanceTestClass();
-            var wrapper = Shimmy.GetPoseWrapper<int>(() => a.MethodWithParamAndReturn(5));
+            var wrapper = Shimmer.GetPoseWrapper<int>(() => a.MethodWithParamAndReturn(5));
             Assert.IsNotNull(wrapper);
             var result = wrapper.Execute(5);
             Assert.AreEqual(0, result);
@@ -332,7 +332,7 @@ namespace Shimmy.Tests
         {
             var a = new InstanceTestClass();
             var methodInfo = a.GetType().GetMethod("VoidMethod");
-            var wrapper = Shimmy.GetPoseWrapper(methodInfo, a);
+            var wrapper = Shimmer.GetPoseWrapper(methodInfo, a);
             Assert.IsNotNull(wrapper);
             wrapper.Execute();
             Assert.IsNotNull(wrapper.LastExecutionResults);
@@ -344,7 +344,7 @@ namespace Shimmy.Tests
         {
             var a = new InstanceTestClass();
             var methodInfo = a.GetType().GetMethod("MethodWithReturn");
-            var wrapper = Shimmy.GetPoseWrapper<int>(methodInfo, a);
+            var wrapper = Shimmer.GetPoseWrapper<int>(methodInfo, a);
             Assert.IsNotNull(wrapper);
             var result = wrapper.Execute();
             Assert.AreEqual(0, result);
@@ -358,7 +358,7 @@ namespace Shimmy.Tests
         {
             var a = new InstanceTestClass();
             var methodInfo = a.GetType().GetMethod("MethodWithValueTypeParam");
-            var wrapper = Shimmy.GetPoseWrapper(methodInfo, a);
+            var wrapper = Shimmer.GetPoseWrapper(methodInfo, a);
             Assert.IsNotNull(wrapper);
             wrapper.Execute(5);
             Assert.IsNotNull(wrapper.LastExecutionResults);
@@ -371,7 +371,7 @@ namespace Shimmy.Tests
         {
             var a = new InstanceTestClass();
             var methodInfo = a.GetType().GetMethod("MethodWithParamAndReturn");
-            var wrapper = Shimmy.GetPoseWrapper<int>(methodInfo, a);
+            var wrapper = Shimmer.GetPoseWrapper<int>(methodInfo, a);
             Assert.IsNotNull(wrapper);
             var result = wrapper.Execute(5);
             Assert.AreEqual(0, result);
