@@ -11,7 +11,7 @@ Like Pose, Shimmy is based on .NET Standard 2.0 and can be used across .NET plat
 
 ### First, create a PoseWrapper for your method
 
-Include Shimmy in your project, and then, in your tests, ask Shimmy to build a Pose wrapper for your method under test by passing it a delegate:
+Include Shimmy in your project, and then, in your tests, ask Shimmy to build a Pose wrapper for your method under test by passing it an expression:
 ```c#
 var wrapper = Shimmy.GetPoseWrapper(() => MyTestClass.AStaticMethod());
 ```
