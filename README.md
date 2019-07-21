@@ -5,6 +5,8 @@ Shimmy is an easy-to-use mocking framework based on [Pose](https://github.com/to
 
 Instead, simply point Shimmy at the method under test, and it will deconstruct said method and generate shims for any calls within it. Then, you can tell Shimmy how those delegates should behave. The work of writing shims is handled entirely by the library, leaving you free to focus on writing tests. Plus, Shimmy's delegates keep records of the parameters passed to them each time they're called, so you can use them to verify that your program is performing correctly. 
 
+Like Pose, Shimmy is based on .NET Standard 2.0 and can be used across .NET platforms.
+
 ## How do I use Shimmy?
 
 ### First, create a PoseWrapper for your method
