@@ -1,3 +1,7 @@
+View the original Pose repository at [https://github.com/tonerdo/pose](https://github.com/tonerdo/pose).
+
+Pose is copyright 2017 Toni Solarin-Sodara. See its [license](https://github.com/frogsquire/shimmy/blob/master/POSELICENSE.md) for more details.
+
 [![Windows build status](https://ci.appveyor.com/api/projects/status/github/tonerdo/pose?branch=master&svg=true)](https://ci.appveyor.com/project/tonerdo/pose)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![NuGet version](https://badge.fury.io/nu/Pose.svg)](https://www.nuget.org/packages/Pose)
