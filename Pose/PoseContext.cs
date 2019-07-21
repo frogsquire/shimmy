@@ -66,9 +66,9 @@ namespace Pose
             StubCache = new Dictionary<MethodBase, DynamicMethod>();
 
             MethodRewriter rewriter = MethodRewriter.CreateRewriter(entryPoint.Method);
-            var delToInvoke = ((MethodInfo)(rewriter.Rewrite())).CreateDelegate(delegateType);
-            var parameters = delToInvoke.Method.GetParameters();
-            return (T)delToInvoke.DynamicInvoke(args);            
+            var delToInvoke = ((MethodInfo)(rewriter.Rewrite())).CreateDelegate(delegateType, entryPoint.Target);
+
+            return (T)delToInvoke.DynamicInvoke(args);                     
         }
 
         // todo: move this?

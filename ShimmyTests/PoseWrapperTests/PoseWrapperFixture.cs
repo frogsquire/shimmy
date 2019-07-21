@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Pose;
 using Shimmy.Tests.SharedTestClasses;
 using System;
 using System.Collections.Generic;
@@ -81,6 +82,7 @@ namespace Shimmy.Tests.PoseWrapperTests
 
             public int MethodCallingGetterSetter()
             {
+                var result = InstanceMethodWithParamAndReturn(1);
                 return GetterSetter;
             }
 
@@ -231,6 +233,18 @@ namespace Shimmy.Tests.PoseWrapperTests
         }
 
         [TestMethod]
+        public void PoseWrapper_Works_When_Getter_Setter_Not_Shimmed()
+        {
+            var a = new TestClass();
+            a.GetterSetter = 9;
+            var wrapper = Shimmer.GetPoseWrapper<int>(() => a.MethodCallingGetterSetter(), WrapperOptions.None);
+            var result = wrapper.Execute();
+            Assert.AreEqual(9, result);
+            Assert.AreEqual(1, wrapper.LastExecutionResults.Count());
+            Assert.AreEqual("InstanceMethodWithParamAndReturn", wrapper.LastExecutionResults.First().Key.Name);
+        }
+
+        [TestMethod]
         public void PoseWrapper_SetReturn_Changes_Value_Of_Correct_Shim_On_Getter_Setter_When_Option_Is_Set()
         {
             var a = new TestClass();
@@ -241,10 +255,13 @@ namespace Shimmy.Tests.PoseWrapperTests
             var result = wrapper.Execute();
             Assert.AreEqual(result, 5);
 
-            Assert.AreEqual(1, wrapper.LastExecutionResults.Count);
+            Assert.AreEqual(2, wrapper.LastExecutionResults.Count);
+            var resultsInstanceMethodWithParamAndReturn = wrapper.LastExecutionResults.First(ler => ler.Key.Name.Equals("InstanceMethodWithParamAndReturn")).Value;
             var resultsGetterSetter = wrapper.LastExecutionResults.First(ler => ler.Key.Name.Equals("get_GetterSetter")).Value;
             Assert.AreEqual(1, resultsGetterSetter.Count);
             Assert.IsTrue(resultsGetterSetter.First().CalledAt > preCallDateTime);
+            Assert.AreEqual(1, resultsInstanceMethodWithParamAndReturn.Count);
+            Assert.IsTrue(resultsGetterSetter.First().CalledAt > resultsInstanceMethodWithParamAndReturn.First().CalledAt);
         }
 
         [TestMethod]
