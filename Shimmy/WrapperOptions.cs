@@ -8,6 +8,7 @@ namespace Shimmy
     public enum WrapperOptions
     {
         None=0,
-        ShimSpecialNames=1
+        ShimSpecialNames=1,
+        ShimPrivateMembers=2
     }
 }

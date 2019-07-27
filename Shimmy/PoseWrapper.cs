@@ -145,7 +145,8 @@ namespace Shimmy
             return memberInfos.Where(mi => mi.MemberType == MemberTypes.Method)
                 .Select(mi => mi as MethodInfo)
                 .Where(mi => !Exceptions.Contains(mi)
-                            && (Options.HasFlag(WrapperOptions.ShimSpecialNames) || !mi.IsSpecialName))
+                            && (Options.HasFlag(WrapperOptions.ShimSpecialNames) || !mi.IsSpecialName)
+                            && (Options.HasFlag(WrapperOptions.ShimPrivateMembers) || !mi.IsPrivate))
                 .ToList();
         }
 
@@ -193,8 +194,11 @@ namespace Shimmy
                 methodName = splitMethodName[1];
             }
 
-            var shimmedMethod = _shimmedMethods.First(sm => sm.Method.Name.Equals(methodName)
+            var shimmedMethod = _shimmedMethods.FirstOrDefault(sm => sm.Method.Name.Equals(methodName)
                     && (string.IsNullOrEmpty(className) || sm.Method.DeclaringType.Name.Equals(className)));
+
+            if (shimmedMethod == null)
+                throw new InvalidOperationException(string.Format(CouldNotFindMatchingShimError, methodName));
 
             shimmedMethod.SetReturnValue(value);
         }

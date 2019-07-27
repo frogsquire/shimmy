@@ -92,6 +92,16 @@ namespace Shimmy.Tests.PoseWrapperTests
                 string1 += "stone";
                 return string1;
             }
+
+            public int MethodThatCallsPrivateMethod()
+            {
+                return APrivateMethod();
+            }
+
+            private int APrivateMethod()
+            {
+                return 5;
+            }
         }
 
         [TestMethod]
@@ -328,6 +338,40 @@ namespace Shimmy.Tests.PoseWrapperTests
             var result = wrapper.Execute();
             Assert.AreEqual("birdstone", result);
             Assert.IsFalse(wrapper.LastExecutionResults.Any());
+        }
+
+        [TestMethod]
+        public void PoseWrapper_Shims_Private_Methods_When_Option_Is_Set()
+        {
+            var a = new TestClass();
+            var wrapper = new PoseWrapper<int>((Func<int>)a.MethodThatCallsPrivateMethod, null, WrapperOptions.ShimPrivateMembers);
+            wrapper.SetReturn("APrivateMethod", 6);
+            var result = wrapper.Execute();
+            Assert.AreEqual(6, result);
+            var callResults = wrapper.LastExecutionResults.First(l => l.Key.Name.Equals("APrivateMethod")).Value;
+            Assert.IsNotNull(callResults);
+            Assert.AreEqual(1, callResults.Count);
+        }
+
+        [TestMethod]
+        public void PoseWrapper_Does_Not_Shim_Private_Methods_When_Option_Not_Set()
+        {
+            var a = new TestClass();
+            var wrapper = new PoseWrapper<int>((Func<int>)a.MethodThatCallsPrivateMethod, null, WrapperOptions.None);
+
+            try
+            {
+                wrapper.SetReturn("APrivateMethod", 6);
+                Assert.Fail("Expected exception.");
+            }
+            catch (InvalidOperationException)
+            {
+                // expected
+            }
+
+            var result = wrapper.Execute();
+            Assert.AreEqual(5, result);
+            Assert.IsFalse(wrapper.LastExecutionResults.Any(l => l.Key.Name.Equals("APrivateMethod")));
         }
     }
 }
