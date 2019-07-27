@@ -373,5 +373,53 @@ namespace Shimmy.Tests.PoseWrapperTests
             Assert.AreEqual(5, result);
             Assert.IsFalse(wrapper.LastExecutionResults.Any(l => l.Key.Name.Equals("APrivateMethod")));
         }
+
+        [TestMethod]
+        public void PoseWrapper_Returns_Results_Per_Method_By_MethodInfo()
+        {
+            var a = new TestClass();
+            var wrapper = new PoseWrapper<bool>((Func<bool>)a.CallTwoDifferentMethods, null, WrapperOptions.None);
+            var methodInfo = typeof(StaticMethodsTestClass).GetMethod("MethodWithParamsAndReturn");
+
+            var preCallDateTime = DateTime.Now;
+            var result = wrapper.Execute();
+
+            var callResults = wrapper.ResultsFor(methodInfo);
+            Assert.IsNotNull(callResults);
+            Assert.AreEqual(1, callResults.Count);
+            Assert.IsTrue(callResults.SequenceEqual(wrapper.LastExecutionResults.FirstOrDefault(m => m.Key == methodInfo).Value));
+        }
+
+        [TestMethod]
+        public void PoseWrapper_Returns_Results_Per_Method_By_Name()
+        {
+            var a = new TestClass();
+            var wrapper = new PoseWrapper<bool>((Func<bool>)a.CallTwoDifferentMethods, null, WrapperOptions.None);
+            var methodInfo = typeof(StaticMethodsTestClass).GetMethod("MethodWithParamsAndReturn");
+
+            var preCallDateTime = DateTime.Now;
+            var result = wrapper.Execute();
+
+            var callResults = wrapper.ResultsFor("MethodWithParamsAndReturn");
+            Assert.IsNotNull(callResults);
+            Assert.AreEqual(1, callResults.Count);
+            Assert.IsTrue(callResults.SequenceEqual(wrapper.LastExecutionResults.FirstOrDefault(m => m.Key == methodInfo).Value));
+        }
+
+        [TestMethod]
+        public void PoseWrapper_Returns_Results_Per_Method_By_Expression()
+        {
+            var a = new TestClass();
+            var wrapper = new PoseWrapper<bool>((Func<bool>)a.CallTwoDifferentMethods, null, WrapperOptions.None);
+            var methodInfo = typeof(StaticMethodsTestClass).GetMethod("MethodWithParamsAndReturn");
+
+            var preCallDateTime = DateTime.Now;
+            var result = wrapper.Execute();
+
+            var callResults = wrapper.ResultsFor(() => StaticMethodsTestClass.MethodWithParamsAndReturn(Pose.Is.A<int>(), Pose.Is.A<int>()));
+            Assert.IsNotNull(callResults);
+            Assert.AreEqual(1, callResults.Count);
+            Assert.IsTrue(callResults.SequenceEqual(wrapper.LastExecutionResults.FirstOrDefault(m => m.Key == methodInfo).Value));
+        }
     }
 }

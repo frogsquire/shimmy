@@ -40,7 +40,7 @@ namespace Shimmy.Data
             if (_currentRunningMethod == null)
                 throw new NullReferenceException();
 
-            _currentRunningMethod.CallResults.Add(new ShimmedMethodCall(parameters));
+            _currentRunningMethod.CallResults.Add(new ShimmedMethodCall(parameters, _currentRunningMethod.Method));
         }
 
         public static void ClearRunningMethod()

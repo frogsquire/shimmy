@@ -173,7 +173,7 @@ namespace Shimmy.Data
 
         protected void AddCallResult() => AddCallResultWithParams(new object[] { });
 
-        protected void AddCallResultWithParams(params object[] parameters) => CallResults.Add(new ShimmedMethodCall(parameters));
+        protected void AddCallResultWithParams(params object[] parameters) => CallResults.Add(new ShimmedMethodCall(parameters, Method));
 
         public virtual void SetReturnValue(object value)
         {

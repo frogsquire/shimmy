@@ -1,14 +1,14 @@
-﻿using Pose;
+﻿using Mono.Reflection;
+using Pose;
+using Pose.Helpers;
+using Shimmy.Data;
+using Shimmy.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
-using Mono.Reflection;
-using Shimmy.Data;
-using Shimmy.Helpers;
-using System.Linq.Expressions;
-using Pose.Helpers;
 
 namespace Shimmy
 {
@@ -28,7 +28,7 @@ namespace Shimmy
          */
         internal Delegate _entryPoint;
 
-        internal Type _entryPointType; 
+        internal Type _entryPointType;
 
         public PoseWrapper(Action entryPoint)
         {
@@ -53,14 +53,14 @@ namespace Shimmy
         public PoseWrapper(Delegate entryPoint, Type returnType = null, Type entryPointType = null, ParameterInfo[] entryPointParameters = null, WrapperOptions options = WrapperOptions.None)
         {
             Init(entryPoint, options, returnType, entryPointType, entryPointParameters);
-        }        
+        }
 
         private void Init(Delegate entryPoint, WrapperOptions options, Type returnType = null, Type entryPointType = null, ParameterInfo[] entryPointParameters = null)
         {
             Options = options;
             _entryPoint = entryPoint ?? throw new ArgumentException("Cannot convert entryPoint to Action. Did you mean to use PoseWrapper<>?");
             _entryPointParameters = entryPointParameters ?? entryPoint.Method.GetParameters();
-            _entryPointType = entryPointType 
+            _entryPointType = entryPointType
                 ?? DelegateTypeHelper.GetTypeForDelegate(_entryPointParameters.Select(epp => epp.ParameterType).ToArray(), returnType);
             GenerateShimmedMethods();
         }
@@ -120,11 +120,22 @@ namespace Shimmy
         public Dictionary<MethodInfo, List<ShimmedMethodCall>> LastExecutionResults =>
              _shimmedMethods.ToDictionary(sm => sm.Method, sm => sm.CallResults.ToList());
 
+        public List<ShimmedMethodCall> ResultsFor(Expression<Action> expression) =>
+            ResultsFor((MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance));
+
+        public List<ShimmedMethodCall> ResultsFor<T>(Expression<Func<T>> expression) =>
+            ResultsFor((MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance));
+
+        public List<ShimmedMethodCall> ResultsFor(string methodName) => ParseMethodFromString(methodName)?.CallResults;
+
+        public List<ShimmedMethodCall> ResultsFor(MethodInfo method) =>
+            _shimmedMethods.FirstOrDefault(sm => sm.Method == method)?.CallResults;
+
         private void GenerateShimmedMethods()
         {
             var methods = GetMethodCallsInEntryPoint(_entryPoint);
             _shimmedMethods = new HashSet<ShimmedMethod>();
-            foreach(var method in methods)
+            foreach (var method in methods)
             {
                 _shimmedMethods.Add(GetShimmedMethod(method));
             }
@@ -179,23 +190,9 @@ namespace Shimmy
             SetReturn(methodInfo, value);
         }
 
-        /*
-         * Accepts methods in the form:
-         *  "methodName"
-         *  "className.methodName"
-         */
         public void SetReturn(string methodName, object value)
         {
-            var className = string.Empty;
-            if (methodName.Contains("."))
-            {
-                var splitMethodName = methodName.Split('.');
-                className = splitMethodName[0];
-                methodName = splitMethodName[1];
-            }
-
-            var shimmedMethod = _shimmedMethods.FirstOrDefault(sm => sm.Method.Name.Equals(methodName)
-                    && (string.IsNullOrEmpty(className) || sm.Method.DeclaringType.Name.Equals(className)));
+            var shimmedMethod = ParseMethodFromString(methodName);
 
             if (shimmedMethod == null)
                 throw new InvalidOperationException(string.Format(CouldNotFindMatchingShimError, methodName));
@@ -213,11 +210,29 @@ namespace Shimmy
             shimmedMethod.SetReturnValue(value);
         }
 
+        /*
+         * Accepts methods in the form:
+         *  "methodName"
+         *  "className.methodName"
+         */
+        private ShimmedMethod ParseMethodFromString(string methodName)
+        {
+            var className = string.Empty;
+            if (methodName.Contains("."))
+            {
+                var splitMethodName = methodName.Split('.');
+                className = splitMethodName[0];
+                methodName = splitMethodName[1];
+            }
+            return _shimmedMethods.FirstOrDefault(sm => sm.Method.Name.Equals(methodName)
+                    && (string.IsNullOrEmpty(className) || sm.Method.DeclaringType.Name.Equals(className)));            
+        }
+
         // never shim string.concat(); it breaks the + operator
         // todo: are there other methods in a similar situation?
         // todo: what if someone wishes to override this?
         private static List<MethodInfo> MethodsToNeverShim =>
-            typeof(string).GetMethods().Where(m => m.Name.Equals("Concat")).ToList();       
+            typeof(string).GetMethods().Where(m => m.Name.Equals("Concat")).ToList();
 
         // todo: add custom exceptions here
         private static List<MethodInfo> Exceptions => MethodsToNeverShim;
