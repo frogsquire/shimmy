@@ -98,9 +98,19 @@ namespace Shimmy.Tests.PoseWrapperTests
                 return APrivateMethod();
             }
 
+            public int MethodThatCallsPrivateMethodWithCalls()
+            {
+                return APrivateMethodWithCalls();
+            }
+
             private int APrivateMethod()
             {
                 return 5;
+            }
+
+            private int APrivateMethodWithCalls()
+            {
+                return StaticMethodsTestClass.MethodWithParamAndReturn(5);
             }
         }
 
@@ -372,6 +382,30 @@ namespace Shimmy.Tests.PoseWrapperTests
             var result = wrapper.Execute();
             Assert.AreEqual(5, result);
             Assert.IsFalse(wrapper.LastExecutionResults.Any(l => l.Key.Name.Equals("APrivateMethod")));
+        }
+
+        [TestMethod]
+        public void PoseWrapper_Shims_Calls_Within_Private_Methods_When_Option_Not_Set()
+        {
+            var a = new TestClass();
+            var wrapper = new PoseWrapper<int>((Func<int>)a.MethodThatCallsPrivateMethodWithCalls, null, WrapperOptions.None);
+
+            try
+            {
+                wrapper.SetReturn("APrivateMethodWithCalls", 6);
+                Assert.Fail("Expected exception.");
+            }
+            catch (InvalidOperationException)
+            {
+                // expected
+            }
+
+            wrapper.SetReturn("MethodWithParamAndReturn", 6);
+            var result = wrapper.Execute();
+            Assert.AreEqual(6, result);
+            Assert.IsFalse(wrapper.LastExecutionResults.Any(l => l.Key.Name.Equals("APrivateMethodWithCalls")));
+            var callResult = wrapper.ResultsFor("MethodWithParamAndReturn").First();
+            Assert.AreEqual(5, callResult.Parameters[0]); // the value passed in private method
         }
 
         [TestMethod]

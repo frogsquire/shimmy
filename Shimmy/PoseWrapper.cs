@@ -149,16 +149,32 @@ namespace Shimmy
         private List<MethodInfo> GetMethodCallsInEntryPoint(Delegate entryPoint)
         {
             var instructions = entryPoint.GetMethodInfo().GetInstructions();
-            var memberInfos = instructions.Where(i => i.OpCode.OperandType == OperandType.InlineMethod)
-                .Select(i => i.Operand as MemberInfo).Distinct();
+            return GetMethodCallsFromInstructions(instructions);
+        }
 
-            // todo: constructors
-            return memberInfos.Where(mi => mi.MemberType == MemberTypes.Method)
-                .Select(mi => mi as MethodInfo)
-                .Where(mi => !Exceptions.Contains(mi)
-                            && (Options.HasFlag(WrapperOptions.ShimSpecialNames) || !mi.IsSpecialName)
-                            && (Options.HasFlag(WrapperOptions.ShimPrivateMembers) || !mi.IsPrivate))
-                .ToList();
+        private List<MethodInfo> GetMethodCallsFromInstructions(IList<Instruction> instructions, List<MethodInfo> methodCallsToShim = null)
+        {
+            // todo: support constructors (which are memberinfos, not methodinfos)
+            var methodInfos = instructions.Where(i => i.OpCode.OperandType == OperandType.InlineMethod)
+                .Select(i => i.Operand as MethodInfo).Distinct();
+
+            if (methodCallsToShim == null)
+                methodCallsToShim = new List<MethodInfo>();
+
+            foreach (var method in methodInfos)
+            {
+                if (methodCallsToShim.Contains(method) || method == null)
+                    continue;
+
+                if (!Exceptions.Contains(method)
+                    && (Options.HasFlag(WrapperOptions.ShimPrivateMembers) || !method.IsPrivate)
+                    && (Options.HasFlag(WrapperOptions.ShimSpecialNames) || !method.IsSpecialName))
+                    methodCallsToShim.Add(method);
+                else if (!Options.HasFlag(WrapperOptions.ShimPrivateMembers) && method.IsPrivate)
+                    methodCallsToShim = GetMethodCallsFromInstructions(method.GetInstructions(), methodCallsToShim);                
+            }
+
+            return methodCallsToShim;
         }
 
         private ShimmedMethod GetShimmedMethod(MethodInfo m)
