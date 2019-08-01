@@ -118,7 +118,7 @@ namespace Shimmy.Tests.PoseWrapperTests
         public void PoseWrapper_Creates_One_Shim_Per_Unique_Method_Called_Multiple_Times()
         {
             var wrapper = new PoseWrapper(new TestClass().CallTheSameMethodTwice);
-            Assert.AreEqual(1, wrapper._shimmedMethods.Count);
+            Assert.AreEqual(1, wrapper.ShimmedMembers.Count);
         }
 
         [TestMethod]
