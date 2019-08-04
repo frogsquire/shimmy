@@ -9,6 +9,7 @@ namespace Shimmy
     {
         None=0,
         ShimSpecialNames=1,
-        ShimPrivateMembers=2
+        ShimPrivateMembers=2,
+        ShimConstructors=4
     }
 }
