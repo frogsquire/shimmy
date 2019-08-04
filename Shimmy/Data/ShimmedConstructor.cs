@@ -13,6 +13,18 @@ namespace Shimmy.Data
 
         public T ReturnValue { get; set; }
 
+        public ShimmedConstructor(ConstructorInfo constructor) : base()
+        {
+            ReturnValue = ShimmedMemberHelper.GetDefaultValue<T>();
+            Init(constructor);
+        }
+
+        public ShimmedConstructor(ConstructorInfo constructor, T returnValue) : base()
+        {
+            ReturnValue = returnValue;
+            Init(constructor);
+        }
+
         protected override ParameterExpression[] GenerateExpressionParameters()
         {
             var parameters = Constructor.GetParameters();
@@ -29,21 +41,16 @@ namespace Shimmy.Data
         protected override Delegate GetShimAction()
         {
             if (!ExpressionParameters.Any())
-                return (Func<T>)(() => LogAndReturnOrCreate());
+                return (Func<T>)(() => LogAndReturn());
 
             return GenerateDynamicShim();
         }
 
-        private T LogAndReturnOrCreate()
+        private T LogAndReturn()
         {
             AddCallResult();
 
-            // todo: improve this
-            if (ReturnValue != null)
-                return ReturnValue;
-
-            // todo: objects with only constructors that are parameterized
-            return Activator.CreateInstance<T>();
+            return ReturnValue;
         }
 
         private Delegate GenerateDynamicShim()
@@ -62,6 +69,15 @@ namespace Shimmy.Data
                 LibraryReferenceGuid,
                 expressionParamsArray,
                 Constructor.DeclaringType);
+        }
+
+        // todo: reduce duplicated code here
+        public override void SetReturnValue(object value)
+        {
+            if (value.GetType() != typeof(T))
+                throw new InvalidOperationException(string.Format(ShimmedMethod.InvalidReturnTypeError, value.GetType(), typeof(T)));
+
+            ReturnValue = (T)value;
         }
     }
 }

@@ -90,9 +90,9 @@ namespace Shimmy.Data
 
         private bool ReturnValueIsDefaultForType => !EqualityComparer<T>.Default.Equals(ReturnValue, default(T));
 
-        public ShimmedMethod(MethodInfo method) : base(method)
+        public ShimmedMethod(MethodInfo method) : base()
         {
-            ReturnValue = GetDefaultValue();
+            ReturnValue = ShimmedMemberHelper.GetDefaultValue<T>();
             Init(method); 
         }
 
@@ -128,25 +128,6 @@ namespace Shimmy.Data
                 throw new InvalidOperationException(string.Format(InvalidReturnTypeError, value.GetType(), typeof(T)));
 
             ReturnValue = (T)value;    
-        }
-
-        private static T GetDefaultValue()
-        {
-            var returnType = typeof(T);
-
-            // if it's a value type, or an object with parameters in the constructor
-            // todo: investigate circular reference issue in object with params in constructor
-            // todo: add tests for this case
-            if (returnType.IsValueType || returnType.GetConstructor(Type.EmptyTypes) == null)
-            {
-                return default(T);
-            }
-            // if this is a reference type, and there is a parameterless constructor
-            // build an empty new object and return that
-            else
-            {
-                return Activator.CreateInstance<T>();
-            }
         }
     }
 }
