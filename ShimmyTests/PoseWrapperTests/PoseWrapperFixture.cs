@@ -112,6 +112,11 @@ namespace Shimmy.Tests.PoseWrapperTests
             {
                 return StaticMethodsTestClass.MethodWithParamAndReturn(5);
             }
+
+            public static InstanceMethodsTestClass ConstructTestClass()
+            {
+                return new InstanceMethodsTestClass();
+            }
         }
 
         [TestMethod]
@@ -447,13 +452,75 @@ namespace Shimmy.Tests.PoseWrapperTests
             var wrapper = new PoseWrapper<bool>((Func<bool>)a.CallTwoDifferentMethods, null, WrapperOptions.None);
             var methodInfo = typeof(StaticMethodsTestClass).GetMethod("MethodWithParamsAndReturn");
 
-            var preCallDateTime = DateTime.Now;
             var result = wrapper.Execute();
 
             var callResults = wrapper.ResultsFor(() => StaticMethodsTestClass.MethodWithParamsAndReturn(Pose.Is.A<int>(), Pose.Is.A<int>()));
             Assert.IsNotNull(callResults);
             Assert.AreEqual(1, callResults.Count);
             Assert.IsTrue(callResults.SequenceEqual(wrapper.LastExecutionResults.FirstOrDefault(m => m.Key == methodInfo).Value));
+        }
+
+        [TestMethod]
+        public void PoseWrapper_Shims_Constructors_When_Flag_Is_Set()
+        {
+            var wrapper = new PoseWrapper<InstanceMethodsTestClass>((Func<InstanceMethodsTestClass>)TestClass.ConstructTestClass, null, WrapperOptions.ShimConstructors);
+            var constructorInfo = typeof(InstanceMethodsTestClass).GetConstructor(Type.EmptyTypes);
+
+            var result = wrapper.Execute();
+
+            var callResults = wrapper.ResultsFor(constructorInfo);
+            Assert.IsNotNull(callResults);
+            Assert.AreEqual(1, callResults.Count);
+            Assert.IsTrue(callResults.SequenceEqual(wrapper.LastExecutionResults.FirstOrDefault(m => m.Key == constructorInfo).Value));
+        }
+
+        [TestMethod]
+        public void PoseWrapper_Does_Not_Shim_Constructors_When_Flag_Not_Set()
+        {
+            var wrapper = new PoseWrapper<InstanceMethodsTestClass>((Func<InstanceMethodsTestClass>)TestClass.ConstructTestClass, null, WrapperOptions.None);
+            var constructorInfo = typeof(InstanceMethodsTestClass).GetConstructor(Type.EmptyTypes);
+
+            var result = wrapper.Execute();
+
+            var callResults = wrapper.ResultsFor(constructorInfo);
+            Assert.IsNull(callResults);
+        }
+
+        [TestMethod]
+        public void PoseWrapper_Sets_Custom_Value_On_Constructors_When_Flag_Is_Set()
+        {
+            var a = new InstanceMethodsTestClass();
+            var wrapper = new PoseWrapper<InstanceMethodsTestClass>((Func<InstanceMethodsTestClass>)TestClass.ConstructTestClass, null, WrapperOptions.ShimConstructors);
+            var constructorInfo = typeof(InstanceMethodsTestClass).GetConstructor(Type.EmptyTypes);
+            wrapper.SetReturn(constructorInfo, a);
+
+            var result = wrapper.Execute();
+
+            var callResults = wrapper.ResultsFor(constructorInfo);
+            Assert.IsNotNull(callResults);
+            Assert.AreEqual(1, callResults.Count);
+            Assert.IsTrue(callResults.SequenceEqual(wrapper.LastExecutionResults.FirstOrDefault(m => m.Key == constructorInfo).Value));
+
+            Assert.AreEqual(a, result);
+            Assert.AreEqual(a.InstanceGuid, result.InstanceGuid);
+        }
+
+        [TestMethod]
+        public void PoseWrapper_Excepts_On_Custom_Value_For_Constructors_When_Flag_Not_Set()
+        {
+            var a = new InstanceMethodsTestClass();
+            var wrapper = new PoseWrapper<InstanceMethodsTestClass>((Func<InstanceMethodsTestClass>)TestClass.ConstructTestClass, null, WrapperOptions.None);
+            var constructorInfo = typeof(InstanceMethodsTestClass).GetConstructor(Type.EmptyTypes);
+
+            try
+            {
+                wrapper.SetReturn(constructorInfo, a);
+                Assert.Fail("Expected an InvalidOperationException.");
+            }
+            catch(InvalidOperationException e)
+            {
+                Assert.AreEqual(string.Format(PoseWrapper.CouldNotFindMatchingShimError, constructorInfo), e.Message);
+            }
         }
     }
 }

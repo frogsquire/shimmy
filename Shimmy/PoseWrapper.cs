@@ -121,15 +121,15 @@ namespace Shimmy
              ShimmedMembers.ToDictionary(sm => sm.Member, sm => sm.CallResults.ToList());
 
         public List<ShimmedMemberCall> ResultsFor(Expression<Action> expression) =>
-            ResultsFor((MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance));
+            ResultsFor(MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance));
 
         public List<ShimmedMemberCall> ResultsFor<T>(Expression<Func<T>> expression) =>
-            ResultsFor((MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance));
+            ResultsFor(MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance));
 
-        public List<ShimmedMemberCall> ResultsFor(string methodName) => ParseMethodFromString(methodName)?.CallResults;
+        public List<ShimmedMemberCall> ResultsFor(string memberName) => ParseMemberFromString(memberName)?.CallResults;
 
-        public List<ShimmedMemberCall> ResultsFor(MethodInfo method) =>
-            ShimmedMembers.FirstOrDefault(sm => sm.Member == method)?.CallResults;
+        public List<ShimmedMemberCall> ResultsFor(MemberInfo member) =>
+            ShimmedMembers.FirstOrDefault(sm => sm.Member == member)?.CallResults;
 
         private void GenerateShimmedMethods()
         {
@@ -205,44 +205,46 @@ namespace Shimmy
             return (ShimmedMethod)Activator.CreateInstance(genericShimmedMethod, new object[] { m });
         }
 
-        private ShimmedConstructor<T> GetShimmedConstructor<T>(MemberInfo m, T objectType)
+        private ShimmedMember GetShimmedConstructor<T>(MemberInfo m, T objectType)
         {
             var existingShim = ShimmedMembers.FirstOrDefault(sc => sc.Member.Equals(m));
             if (existingShim != null)
                 return (ShimmedConstructor<T>)existingShim;
 
             var genericShimmedConstructor = typeof(ShimmedConstructor<>).MakeGenericType(new Type[] { m.DeclaringType });
-            return (ShimmedConstructor<T>)Activator.CreateInstance(genericShimmedConstructor, new object[] { m });
+
+            // cast back to ShimmedMember because there's no way to cast to ShimmedConstructor<T>
+            return (ShimmedMember)Activator.CreateInstance(genericShimmedConstructor, new object[] { m });
         }
 
         public void SetReturn(Expression<Action> expression, object value)
         {
-            var methodInfo = (MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
-            SetReturn(methodInfo, value);
+            var memberInfo = MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
+            SetReturn(memberInfo, value);
         }
 
         public void SetReturn<T>(Expression<Func<T>> expression, object value)
         {
-            var methodInfo = (MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
-            SetReturn(methodInfo, value);
+            var memberInfo = MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
+            SetReturn(memberInfo, value);
         }
 
-        public void SetReturn(string methodName, object value)
+        public void SetReturn(string memberName, object value)
         {
-            var shimmedMethod = ParseMethodFromString(methodName);
+            var shimmedMethod = ParseMemberFromString(memberName);
 
             if (shimmedMethod == null)
-                throw new InvalidOperationException(string.Format(CouldNotFindMatchingShimError, methodName));
+                throw new InvalidOperationException(string.Format(CouldNotFindMatchingShimError, memberName));
 
             shimmedMethod.SetReturnValue(value);
         }
 
-        public void SetReturn(MemberInfo method, object value)
+        public void SetReturn(MemberInfo member, object value)
         {
-            var shimmedMethod = ShimmedMembers.FirstOrDefault(sm => sm.Member.Equals(method));
+            var shimmedMethod = ShimmedMembers.FirstOrDefault(sm => sm.Member.Equals(member));
 
             if (shimmedMethod == null)
-                throw new InvalidOperationException(string.Format(CouldNotFindMatchingShimError, method));
+                throw new InvalidOperationException(string.Format(CouldNotFindMatchingShimError, member));
 
             shimmedMethod.SetReturnValue(value);
         }
@@ -252,16 +254,16 @@ namespace Shimmy
          *  "methodName"
          *  "className.methodName"
          */
-        private ShimmedMember ParseMethodFromString(string methodName)
+        private ShimmedMember ParseMemberFromString(string memberName)
         {
             var className = string.Empty;
-            if (methodName.Contains("."))
+            if (memberName.Contains("."))
             {
-                var splitMethodName = methodName.Split('.');
-                className = splitMethodName[0];
-                methodName = splitMethodName[1];
+                var splitMemberName = memberName.Split('.');
+                className = splitMemberName[0];
+                memberName = splitMemberName[1];
             }
-            return ShimmedMembers.FirstOrDefault(sm => sm.Member.Name.Equals(methodName)
+            return ShimmedMembers.FirstOrDefault(sm => sm.Member.Name.Equals(memberName)
                     && (string.IsNullOrEmpty(className) || sm.Member.DeclaringType.Name.Equals(className)));            
         }
 

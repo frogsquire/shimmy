@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shimmy.Data;
+using Shimmy.Tests.SharedTestClasses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace Shimmy.Tests.Data
     public class ShimLibraryFixture
     {
         private Guid _currentReferenceGuid;
-        private ShimmedMethod _currentShimmedMethod;
+        private ShimmedMember _currentShimmedMethod;
 
         [TestInitialize]
         public void SetUp()
@@ -151,6 +152,36 @@ namespace Shimmy.Tests.Data
             ShimLibrary.SetRunningMethod(_currentReferenceGuid.ToString());
             var result = ShimLibrary.GetReturnValueAndClearRunningMethod<int>();
             Assert.AreEqual(6, result);
+        }
+
+        [TestMethod]
+        public void GetReturnValueAndClearRunningMethod_Returns_Correct_Default_Value_for_Constructor()
+        {
+            ShimLibrary.ClearRunningMethod();
+            var constructorInfo = typeof(InstanceMethodsTestClass).GetConstructor(Type.EmptyTypes);
+            _currentShimmedMethod = new ShimmedConstructor<InstanceMethodsTestClass>(constructorInfo);
+            _currentReferenceGuid = ShimLibrary.Add(_currentShimmedMethod);
+            ShimLibrary.SetRunningMethod(_currentReferenceGuid.ToString());
+           
+            var result = ShimLibrary.GetReturnValueAndClearRunningMethod<InstanceMethodsTestClass>();
+            Assert.IsNotNull(result); // would be null if there was no parameterless constructor
+        }
+
+        [TestMethod]
+        public void GetReturnValueAndClearRunningMethod_Returns_Correct_Custom_Value_for_Constructor()
+        {
+            var a = new InstanceMethodsTestClass();
+
+            ShimLibrary.ClearRunningMethod();
+            var constructorInfo = typeof(InstanceMethodsTestClass).GetConstructor(Type.EmptyTypes);
+            _currentShimmedMethod = new ShimmedConstructor<InstanceMethodsTestClass>(constructorInfo);
+            _currentReferenceGuid = ShimLibrary.Add(_currentShimmedMethod);
+            ShimLibrary.SetRunningMethod(_currentReferenceGuid.ToString());
+            _currentShimmedMethod.SetReturnValue(a);
+
+            var result = ShimLibrary.GetReturnValueAndClearRunningMethod<InstanceMethodsTestClass>();
+            Assert.AreEqual(a.InstanceGuid, result.InstanceGuid);
+            Assert.AreEqual(a, result);
         }
 
         [TestMethod]
