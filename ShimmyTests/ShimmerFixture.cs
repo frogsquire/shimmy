@@ -55,6 +55,10 @@ namespace Shimmy.Tests
             }
         }
 
+        private class ChildInstanceTestClass : InstanceTestClass
+        {
+        }
+
         [TestMethod]
         public void GetPoseWrapper_From_Delegate_Throws_InvalidOperationException_On_Non_Void_Return()
         {
@@ -396,6 +400,15 @@ namespace Shimmy.Tests
             var methodInfo = a.GetType().GetMethod("VoidMethod");
             var wrapper = Shimmer.GetPoseWrapper(methodInfo, a, WrapperOptions.ShimSpecialNames);
             Assert.AreEqual(WrapperOptions.ShimSpecialNames, wrapper.Options);
+        }
+
+        [TestMethod]
+        public void GetPoseWrapper_Works_For_Methods_Derived_From_Parent_Of_Target_Class()
+        {
+            var a = new ChildInstanceTestClass();
+            var methodInfo = a.GetType().GetMethod("MethodWithReturn");
+            var wrapper = Shimmer.GetPoseWrapper<int>(methodInfo, a);
+            Assert.IsNotNull(wrapper);
         }
     }
 }

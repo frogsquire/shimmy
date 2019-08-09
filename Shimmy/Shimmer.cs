@@ -84,8 +84,10 @@ namespace Shimmy
             if (!method.IsStatic && instance == null)
                 throw new ArgumentException("An instance must be provided for a non-static method.");
 
-            if (instance != null && instance.GetType() != method.DeclaringType)
-                throw new ArgumentException("Provided instance must be an instance of " + method.DeclaringType);
+            var instanceType = instance?.GetType();
+
+            if (instance != null && instanceType != method.DeclaringType && !instanceType.IsSubclassOf(method.DeclaringType))
+                throw new ArgumentException("Provided instance must be an instance or child of " + method.DeclaringType);
 
             delegateType = DelegateTypeHelper.GetTypeForDelegate(method.GetParameters(), method.ReturnType);
 
