@@ -145,6 +145,18 @@ public void TestMethod()
 
 ```
 
+## Configuration
+
+The `WrapperOptions` enumeration provides options for configuring Shimmy's behavior:
+
+| Option  | Default | Purpose |
+| ------------- | ------------- | ------------- |
+| ShimSpecialNames  | Disabled  | When enabled, shims will be generated for [special names](https://stackoverflow.com/questions/19788010/which-c-sharp-type-names-are-special) (excluding constructors) |
+| ShimPrivateMembers | Disabled | When enabled, shims will be generated for private members  |
+| ShimConstructors  | Enabled  | When enabled, shims will be generated for constructors (including private constructors) |
+
+Default values are the values used when calling `Shimmer.GetPoseWrapper` without passing any WrapperOptions values. See `Shimmer.DefaultOptions`.
+
 ## Common Questions
 
 ### Can I use Shimmy side-by-side with Pose?
@@ -172,9 +184,8 @@ A complete roadmap with GitHub issues is coming soon. Short-term goals include:
 * Support for specifying custom return for shims based on:
   * How many times a method has been called
   * The values of the parameters passed to the method
-* Improved support for private methods, including the option not to shim them
 * Improved support for shimming and testing getters and setters
-* Support for shimming constructors and properties
+* Support for shimming value-type properties
 
 And longer-term goals:
 * Addition of an instance value to ShimmedMethodCall
