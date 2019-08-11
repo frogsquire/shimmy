@@ -11,8 +11,6 @@ namespace Shimmy.Data
 {
     internal class ShimmedMethod : ShimmedMember<MethodInfo>
     {
-        public const string InvalidReturnTypeError = "Cannot set return value of type {0} on a method with return value of type {1}.";
-
         public MethodInfo Method => Member;
         
         protected override Expression<Action> GenerateCallExpression()
@@ -86,21 +84,18 @@ namespace Shimmy.Data
 
     internal class ShimmedMethod<T> : ShimmedMethod
     {
-        public T ReturnValue { get; set; }
-
-        private bool ReturnValueIsDefaultForType => !EqualityComparer<T>.Default.Equals(ReturnValue, default(T));
+        private bool ReturnValueIsDefaultForType =>
+            !EqualityComparer<T>.Default.Equals((T)ShimAction.ReturnValue, default(T));
 
         public ShimmedMethod(MethodInfo method) : base()
         {
-            ReturnValue = ShimmedMemberHelper.GetDefaultValue<T>();
-            Init(method); 
+            Init(method, method.ReturnType, ShimmedMemberHelper.GetDefaultValue(method.ReturnType)); 
         }
 
         public ShimmedMethod(MethodInfo method, T returnValue) : base()
         {
-            ReturnValue = returnValue;
             // init must be second so method generation will check for return value
-            Init(method);
+            Init(method, method.ReturnType, returnValue);
         }
 
         protected override Shim GenerateShim()
@@ -119,15 +114,7 @@ namespace Shimmy.Data
         private T LogAndReturn()
         {
             AddCallResult();
-            return ReturnValue;
-        }
-
-        public override void SetReturnValue(object value)
-        {
-            if (value.GetType() != typeof(T))
-                throw new InvalidOperationException(string.Format(InvalidReturnTypeError, value.GetType(), typeof(T)));
-
-            ReturnValue = (T)value;    
+            return (T)ShimAction.ReturnValue;
         }
     }
 }

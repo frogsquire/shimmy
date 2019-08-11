@@ -236,7 +236,7 @@ namespace Shimmy
             if (shimmedMethod == null)
                 throw new InvalidOperationException(string.Format(CouldNotFindMatchingShimError, memberName));
 
-            shimmedMethod.SetReturnValue(value);
+            shimmedMethod.ReturnValue = value;
         }
 
         public void SetReturn(MemberInfo member, object value)
@@ -246,7 +246,7 @@ namespace Shimmy
             if (shimmedMethod == null)
                 throw new InvalidOperationException(string.Format(CouldNotFindMatchingShimError, member));
 
-            shimmedMethod.SetReturnValue(value);
+            shimmedMethod.ReturnValue = value;
         }
 
         /*

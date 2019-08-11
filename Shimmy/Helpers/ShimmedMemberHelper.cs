@@ -1,5 +1,6 @@
 ﻿using Shimmy.Data;
 using System;
+using System.Reflection;
 using System.Reflection.Emit;
 
 namespace Shimmy.Helpers
@@ -63,23 +64,25 @@ namespace Shimmy.Helpers
             return dynamicMethod.CreateDelegate(DelegateTypeHelper.GetTypeForDelegate(paramTypesArray, returnType));
         }
 
-        public static T GetDefaultValue<T>()
+        public static object GetDefaultValue(Type returnType)
         {
-            var returnType = typeof(T);
-
             // if it's a value type, or an object with parameters in the constructor
             // todo: investigate circular reference issue in object with params in constructor
             // todo: add tests for this case
-            if (returnType.IsValueType || returnType.GetConstructor(Type.EmptyTypes) == null)
+            if (!returnType.IsValueType && returnType.GetConstructor(Type.EmptyTypes) == null)
             {
-                return default(T);
+                return null; // equivalent to default of returnType
             }
             // if this is a reference type, and there is a parameterless constructor
             // build an empty new object and return that
             else
             {
-                return Activator.CreateInstance<T>();
+                return Activator.CreateInstance(returnType);
             }
         }
+
+        public static bool MemberCanReturn(MemberInfo member) 
+            => !((member is MethodInfo)
+                && ((MethodInfo)member).ReturnType == typeof(void));
     }
 }

@@ -11,18 +11,14 @@ namespace Shimmy.Data
     {
         public ConstructorInfo Constructor => Member;
 
-        public T ReturnValue { get; set; }
-
         public ShimmedConstructor(ConstructorInfo constructor) : base()
         {
-            ReturnValue = ShimmedMemberHelper.GetDefaultValue<T>();
-            Init(constructor);
+            Init(constructor, constructor.DeclaringType, ShimmedMemberHelper.GetDefaultValue(constructor.DeclaringType));
         }
 
         public ShimmedConstructor(ConstructorInfo constructor, T returnValue) : base()
         {
-            ReturnValue = returnValue;
-            Init(constructor);
+            Init(constructor, constructor.DeclaringType, returnValue);
         }
 
         protected override ParameterExpression[] GenerateExpressionParameters()
@@ -37,7 +33,6 @@ namespace Shimmy.Data
         }
 
         // todo: constructors for value types
-
         protected override Delegate GetShimAction()
         {
             if (!ExpressionParameters.Any())
@@ -49,8 +44,7 @@ namespace Shimmy.Data
         private T LogAndReturn()
         {
             AddCallResult();
-
-            return ReturnValue;
+            return (T)ShimAction.ReturnValue;
         }
 
         private Delegate GenerateDynamicShim()
@@ -69,15 +63,6 @@ namespace Shimmy.Data
                 LibraryReferenceGuid,
                 expressionParamsArray,
                 Constructor.DeclaringType);
-        }
-
-        // todo: reduce duplicated code here
-        public override void SetReturnValue(object value)
-        {
-            if (value.GetType() != typeof(T))
-                throw new InvalidOperationException(string.Format(ShimmedMethod.InvalidReturnTypeError, value.GetType(), typeof(T)));
-
-            ReturnValue = (T)value;
         }
     }
 }

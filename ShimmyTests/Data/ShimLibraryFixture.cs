@@ -148,7 +148,7 @@ namespace Shimmy.Tests.Data
         [TestMethod]
         public void GetReturnValueAndClearRunningMethod_Returns_Correct_Custom_Return_Value()
         {
-            _currentShimmedMethod.SetReturnValue(6);
+            _currentShimmedMethod.ReturnValue = 6;
             ShimLibrary.SetRunningMethod(_currentReferenceGuid.ToString());
             var result = ShimLibrary.GetReturnValueAndClearRunningMethod<int>();
             Assert.AreEqual(6, result);
@@ -177,7 +177,7 @@ namespace Shimmy.Tests.Data
             _currentShimmedMethod = new ShimmedConstructor<InstanceMethodsTestClass>(constructorInfo);
             _currentReferenceGuid = ShimLibrary.Add(_currentShimmedMethod);
             ShimLibrary.SetRunningMethod(_currentReferenceGuid.ToString());
-            _currentShimmedMethod.SetReturnValue(a);
+            _currentShimmedMethod.ReturnValue = a;
 
             var result = ShimLibrary.GetReturnValueAndClearRunningMethod<InstanceMethodsTestClass>();
             Assert.AreEqual(a.InstanceGuid, result.InstanceGuid);

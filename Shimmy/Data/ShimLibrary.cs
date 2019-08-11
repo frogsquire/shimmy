@@ -63,11 +63,7 @@ namespace Shimmy.Data
                 throw new InvalidOperationException(CannotGetReturnValueNonMatchingTypeError);
             }
 
-            T returnValue;
-            if (_currentRunningMember is ShimmedMethod<T>)
-                returnValue = ((ShimmedMethod<T>)_currentRunningMember).ReturnValue;
-            else
-                returnValue = ((ShimmedConstructor<T>)_currentRunningMember).ReturnValue;
+            T returnValue = (T)_currentRunningMember.ReturnValue;
 
             ClearRunningMethod();
 

@@ -68,7 +68,7 @@ namespace Shimmy.Tests.Data
             var constructorInfo = typeof(TestClassNoParameterlessConstructor).GetConstructor(new[] { typeof(int) });
             var shimmedConstructor = new ShimmedConstructor<TestClassNoParameterlessConstructor>(constructorInfo);
             var b = new TestClassNoParameterlessConstructor(1);
-            shimmedConstructor.SetReturnValue(b);
+            shimmedConstructor.ReturnValue = b;
 
             Assert.IsNotNull(shimmedConstructor);
             Assert.IsNotNull(shimmedConstructor.Constructor);

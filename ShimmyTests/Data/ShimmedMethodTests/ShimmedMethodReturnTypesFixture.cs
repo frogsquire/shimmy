@@ -166,7 +166,7 @@ namespace Shimmy.Tests.Data.ShimmedMethodTests
             }, new[] { shimmedMethod.Shim });
             Assert.AreEqual(6, value2);
 
-            shimmedMethod.SetReturnValue(7);
+            shimmedMethod.ReturnValue = 7;
             var value3 = 0;
             PoseContext.Isolate(() => {
                 value3 = a.MethodWithValueReturnType();
@@ -180,11 +180,11 @@ namespace Shimmy.Tests.Data.ShimmedMethodTests
             var shimmedMethod = new ShimmedMethod(typeof(TestClass).GetMethod("VoidMethod"));
             try
             {
-                shimmedMethod.SetReturnValue(5);
+                shimmedMethod.ReturnValue = 5;
             }
             catch(InvalidOperationException e)
             {
-                Assert.AreEqual(ShimmedMethod.CannotSetReturnTypeOnVoidMethodError, e.Message);
+                Assert.AreEqual(ShimReplacement.CannotSetReturnTypeOnVoidMemberError, e.Message);
             }
         }
 
@@ -194,11 +194,11 @@ namespace Shimmy.Tests.Data.ShimmedMethodTests
             var shimmedMethod = new ShimmedMethod<int>(typeof(TestClass).GetMethod("StaticMethodWithValueReturnType"));
             try
             {
-                shimmedMethod.SetReturnValue("bird");
+                shimmedMethod.ReturnValue = "bird";
             }
             catch (InvalidOperationException e)
             {
-                var expectedString = string.Format(ShimmedMethod.InvalidReturnTypeError, typeof(string), typeof(int));
+                var expectedString = string.Format(ShimReplacement.InvalidReturnTypeError, typeof(string), typeof(int));
                 Assert.AreEqual(expectedString, e.Message);
             }
         }

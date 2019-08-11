@@ -9,7 +9,6 @@ namespace Shimmy.Data
     internal abstract class ShimmedMember
     {
         public const int MaximumPoseParameters = 10;
-        public const string CannotSetReturnTypeOnVoidMethodError = "Cannot set return value on of a method with return type void.";
 
         protected Guid LibraryReferenceGuid;
         protected ParameterExpression[] ExpressionParameters;
@@ -18,6 +17,8 @@ namespace Shimmy.Data
         protected ShimmedMember() { }
 
         public Shim Shim { get; protected set; }
+
+        public ShimReplacement ShimAction { get; protected set; }
 
         public List<ShimmedMemberCall> CallResults { get; protected set; }
 
@@ -51,9 +52,13 @@ namespace Shimmy.Data
 
         protected abstract Delegate GetShimAction();
 
-        public virtual void SetReturnValue(object value)
+        public object ReturnValue
         {
-            throw new InvalidOperationException(CannotSetReturnTypeOnVoidMethodError);
+            get => ShimAction.ReturnValue;
+            set
+            {
+                ShimAction.ReturnValue = value;
+            }
         }
     }
 
@@ -63,14 +68,14 @@ namespace Shimmy.Data
 
         public ShimmedMember(T member)
         {
-            Init(member);
+            Init(member, typeof(void), null);
         }
 
         protected ShimmedMember() 
         {
         }
 
-        protected void Init(T member)
+        protected void Init(T member, Type shimActionReturnType, object shimActionReturnValue)
         {
             Member = member ?? throw new ArgumentNullException(nameof(member));
             base.Member = member; // todo: is necessary?
@@ -78,6 +83,7 @@ namespace Shimmy.Data
             ExpressionParameters = GenerateExpressionParameters();
             LibraryReferenceGuid = ShimLibrary.Add(this);
             DeclaringType = member.DeclaringType;
+            ShimAction = new ShimReplacement(this, shimActionReturnType, shimActionReturnValue);
 
             Shim = GenerateShim();
             CallResults = new List<ShimmedMemberCall>();
