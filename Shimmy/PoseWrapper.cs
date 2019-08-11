@@ -18,17 +18,17 @@ namespace Shimmy
 
         public WrapperOptions Options { get; private set; }
 
-        internal HashSet<ShimmedMethod> _shimmedMethods;
+        internal HashSet<ShimmedMember> ShimmedMembers;
 
-        internal ParameterInfo[] _entryPointParameters;
+        internal ParameterInfo[] EntryPointParameters;
 
         /*
          * In PoseWrapper, the entry point is assumed to be an Action.
          * In PoseWrapper<T>, it's assumed to be a function with a return type of T.
          */
-        internal Delegate _entryPoint;
+        internal Delegate EntryPoint;
 
-        internal Type _entryPointType;
+        internal Type EntryPointType;
 
         public PoseWrapper(Action entryPoint)
         {
@@ -58,10 +58,10 @@ namespace Shimmy
         private void Init(Delegate entryPoint, WrapperOptions options, Type returnType = null, Type entryPointType = null, ParameterInfo[] entryPointParameters = null)
         {
             Options = options;
-            _entryPoint = entryPoint ?? throw new ArgumentException("Cannot convert entryPoint to Action. Did you mean to use PoseWrapper<>?");
-            _entryPointParameters = entryPointParameters ?? entryPoint.Method.GetParameters();
-            _entryPointType = entryPointType
-                ?? DelegateTypeHelper.GetTypeForDelegate(_entryPointParameters.Select(epp => epp.ParameterType).ToArray(), returnType);
+            EntryPoint = entryPoint ?? throw new ArgumentException("Cannot convert entryPoint to Action. Did you mean to use PoseWrapper<>?");
+            EntryPointParameters = entryPointParameters ?? entryPoint.Method.GetParameters();
+            EntryPointType = entryPointType
+                ?? DelegateTypeHelper.GetTypeForDelegate(EntryPointParameters.Select(epp => epp.ParameterType).ToArray(), returnType);
             GenerateShimmedMethods();
         }
 
@@ -79,22 +79,22 @@ namespace Shimmy
 
             VerifyArguments(args);
 
-            PoseContext.IsolateDelegate(_entryPoint, _entryPointType, GetShims(), args);
+            PoseContext.IsolateDelegate(EntryPoint, EntryPointType, GetShims(), args);
         }
 
         protected void VerifyArguments(params object[] args)
         {
-            if (_entryPointParameters.Length != args.Length)
+            if (EntryPointParameters.Length != args.Length)
                 throw new ArgumentException("Argument list provided does not match entry point parameters.");
 
-            for (var i = 0; i < _entryPointParameters.Length; i++)
+            for (var i = 0; i < EntryPointParameters.Length; i++)
             {
                 var relevantArgument = args[i];
-                var relevantParameter = _entryPointParameters[i];
+                var relevantParameter = EntryPointParameters[i];
 
                 if (relevantArgument == null)
                 {
-                    if (ParameterCanBeNull(_entryPointParameters[i]))
+                    if (ParameterCanBeNull(EntryPointParameters[i]))
                         continue;
                     else
                         throw new ArgumentException("Argument " + i + "is null, but parameters of type " + relevantParameter.ParameterType + " cannot be null.");
@@ -114,49 +114,57 @@ namespace Shimmy
 
         public void ClearLastCallResults()
         {
-            _shimmedMethods.ToList().ForEach(sm => sm.CallResults.Clear());
+            ShimmedMembers.ToList().ForEach(sm => sm.CallResults.Clear());
         }
 
-        public Dictionary<MethodInfo, List<ShimmedMethodCall>> LastExecutionResults =>
-             _shimmedMethods.ToDictionary(sm => sm.Method, sm => sm.CallResults.ToList());
+        public Dictionary<MemberInfo, List<ShimmedMemberCall>> LastExecutionResults =>
+             ShimmedMembers.ToDictionary(sm => sm.Member, sm => sm.CallResults.ToList());
 
-        public List<ShimmedMethodCall> ResultsFor(Expression<Action> expression) =>
-            ResultsFor((MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance));
+        public List<ShimmedMemberCall> ResultsFor(Expression<Action> expression) =>
+            ResultsFor(MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance));
 
-        public List<ShimmedMethodCall> ResultsFor<T>(Expression<Func<T>> expression) =>
-            ResultsFor((MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance));
+        public List<ShimmedMemberCall> ResultsFor<T>(Expression<Func<T>> expression) =>
+            ResultsFor(MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance));
 
-        public List<ShimmedMethodCall> ResultsFor(string methodName) => ParseMethodFromString(methodName)?.CallResults;
+        public List<ShimmedMemberCall> ResultsFor(string memberName) => ParseMemberFromString(memberName)?.CallResults;
 
-        public List<ShimmedMethodCall> ResultsFor(MethodInfo method) =>
-            _shimmedMethods.FirstOrDefault(sm => sm.Method == method)?.CallResults;
+        public List<ShimmedMemberCall> ResultsFor(MemberInfo member) =>
+            ShimmedMembers.FirstOrDefault(sm => sm.Member == member)?.CallResults;
 
         private void GenerateShimmedMethods()
         {
-            var methods = GetMethodCallsInEntryPoint(_entryPoint);
-            _shimmedMethods = new HashSet<ShimmedMethod>();
+            var callInstructions = EntryPoint.GetMethodInfo().GetInstructions()
+                .Where(i => i.OpCode.OperandType == OperandType.InlineMethod);
+
+            var methods = GetMethodCallsFromInstructions(callInstructions);
+
+            ShimmedMembers = new HashSet<ShimmedMember>();
             foreach (var method in methods)
             {
-                _shimmedMethods.Add(GetShimmedMethod(method));
+                ShimmedMembers.Add(GetShimmedMethod(method));
+            }
+
+            if (Options.HasFlag(WrapperOptions.ShimConstructors))
+            {
+                var constructors = new List<MemberInfo>();
+                constructors.AddRange(GetConstructorsFromInstructions(callInstructions));
+
+                foreach (var constructor in constructors)
+                {
+                    ShimmedMembers.Add(GetShimmedConstructor(constructor, constructor.DeclaringType));
+                }
             }
         }
 
         protected Shim[] GetShims()
         {
-            return _shimmedMethods.Select(sm => sm.Shim).ToArray();
+            return ShimmedMembers.Select(sm => sm.Shim).ToArray();
         }
 
-        private List<MethodInfo> GetMethodCallsInEntryPoint(Delegate entryPoint)
-        {
-            var instructions = entryPoint.GetMethodInfo().GetInstructions();
-            return GetMethodCallsFromInstructions(instructions);
-        }
-
-        private List<MethodInfo> GetMethodCallsFromInstructions(IList<Instruction> instructions, List<MethodInfo> methodCallsToShim = null)
+        private List<MethodInfo> GetMethodCallsFromInstructions(IEnumerable<Instruction> callInstructions, List<MethodInfo> methodCallsToShim = null)
         {
             // todo: support constructors (which are memberinfos, not methodinfos)
-            var methodInfos = instructions.Where(i => i.OpCode.OperandType == OperandType.InlineMethod)
-                .Select(i => i.Operand as MethodInfo).Distinct();
+            var methodInfos = callInstructions.Select(i => i.Operand as MethodInfo).Distinct();
 
             if (methodCallsToShim == null)
                 methodCallsToShim = new List<MethodInfo>();
@@ -177,10 +185,13 @@ namespace Shimmy
             return methodCallsToShim;
         }
 
+        private List<MemberInfo> GetConstructorsFromInstructions(IEnumerable<Instruction> callInstructions)
+            => callInstructions.Select(i => i.Operand as MemberInfo).Where(mi => mi.MemberType == MemberTypes.Constructor).Distinct().ToList();
+
         private ShimmedMethod GetShimmedMethod(MethodInfo m)
         {
             // if a shim already exists for this method, don't create a duplicate            
-            var existingShim = _shimmedMethods.FirstOrDefault(sm => sm.Method == m);
+            var existingShim = ShimmedMembers.Select(sm => sm as ShimmedMethod).FirstOrDefault(sm => sm.Member == m);
             if (existingShim != null)
                 return existingShim;
 
@@ -194,34 +205,46 @@ namespace Shimmy
             return (ShimmedMethod)Activator.CreateInstance(genericShimmedMethod, new object[] { m });
         }
 
+        private ShimmedMember GetShimmedConstructor<T>(MemberInfo m, T objectType)
+        {
+            var existingShim = ShimmedMembers.FirstOrDefault(sc => sc.Member.Equals(m));
+            if (existingShim != null)
+                return (ShimmedConstructor<T>)existingShim;
+
+            var genericShimmedConstructor = typeof(ShimmedConstructor<>).MakeGenericType(new Type[] { m.DeclaringType });
+
+            // cast back to ShimmedMember because there's no way to cast to ShimmedConstructor<T>
+            return (ShimmedMember)Activator.CreateInstance(genericShimmedConstructor, new object[] { m });
+        }
+
         public void SetReturn(Expression<Action> expression, object value)
         {
-            var methodInfo = (MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
-            SetReturn(methodInfo, value);
+            var memberInfo = MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
+            SetReturn(memberInfo, value);
         }
 
         public void SetReturn<T>(Expression<Func<T>> expression, object value)
         {
-            var methodInfo = (MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
-            SetReturn(methodInfo, value);
+            var memberInfo = MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
+            SetReturn(memberInfo, value);
         }
 
-        public void SetReturn(string methodName, object value)
+        public void SetReturn(string memberName, object value)
         {
-            var shimmedMethod = ParseMethodFromString(methodName);
+            var shimmedMethod = ParseMemberFromString(memberName);
 
             if (shimmedMethod == null)
-                throw new InvalidOperationException(string.Format(CouldNotFindMatchingShimError, methodName));
+                throw new InvalidOperationException(string.Format(CouldNotFindMatchingShimError, memberName));
 
             shimmedMethod.SetReturnValue(value);
         }
 
-        public void SetReturn(MethodInfo method, object value)
+        public void SetReturn(MemberInfo member, object value)
         {
-            var shimmedMethod = _shimmedMethods.FirstOrDefault(sm => sm.Method.Equals(method));
+            var shimmedMethod = ShimmedMembers.FirstOrDefault(sm => sm.Member.Equals(member));
 
             if (shimmedMethod == null)
-                throw new InvalidOperationException(string.Format(CouldNotFindMatchingShimError, method));
+                throw new InvalidOperationException(string.Format(CouldNotFindMatchingShimError, member));
 
             shimmedMethod.SetReturnValue(value);
         }
@@ -231,17 +254,17 @@ namespace Shimmy
          *  "methodName"
          *  "className.methodName"
          */
-        private ShimmedMethod ParseMethodFromString(string methodName)
+        private ShimmedMember ParseMemberFromString(string memberName)
         {
             var className = string.Empty;
-            if (methodName.Contains("."))
+            if (memberName.Contains("."))
             {
-                var splitMethodName = methodName.Split('.');
-                className = splitMethodName[0];
-                methodName = splitMethodName[1];
+                var splitMemberName = memberName.Split('.');
+                className = splitMemberName[0];
+                memberName = splitMemberName[1];
             }
-            return _shimmedMethods.FirstOrDefault(sm => sm.Method.Name.Equals(methodName)
-                    && (string.IsNullOrEmpty(className) || sm.Method.DeclaringType.Name.Equals(className)));            
+            return ShimmedMembers.FirstOrDefault(sm => sm.Member.Name.Equals(memberName)
+                    && (string.IsNullOrEmpty(className) || sm.Member.DeclaringType.Name.Equals(className)));            
         }
 
         // never shim string.concat(); it breaks the + operator
@@ -294,7 +317,7 @@ namespace Shimmy
 
             VerifyArguments(args);
 
-            return PoseContext.IsolateDelegate<T>(_entryPoint, _entryPointType, GetShims(), args);
+            return PoseContext.IsolateDelegate<T>(EntryPoint, EntryPointType, GetShims(), args);
         }
     }
 }

@@ -8,6 +8,8 @@ namespace Shimmy
 {
     public static class Shimmer
     {
+        public const WrapperOptions DefaultOptions = WrapperOptions.ShimConstructors;
+
         public const string ReturnlessWrapperInvalidDelegate 
             = "Cannot generate a returnless PoseWrapper for an entry point with a non-void return type. Use GetPoseWrapper<T> instead.";
         public const string NonMatchingReturnType 
@@ -15,7 +17,7 @@ namespace Shimmy
 
         // todo: support constructors, getters vs. setters, etc. from here
         // and from the equivalent for GetPoseWrapper<T>
-        public static PoseWrapper GetPoseWrapper(Expression<Action> expression, WrapperOptions options = WrapperOptions.None)
+        public static PoseWrapper GetPoseWrapper(Expression<Action> expression, WrapperOptions options = DefaultOptions)
         {
             var method = (MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
             if (instance is Type)
@@ -24,13 +26,13 @@ namespace Shimmy
                 return GetPoseWrapper(method, instance, options);
         }
 
-        public static PoseWrapper GetPoseWrapper(MethodInfo method, object instance = null, WrapperOptions options = WrapperOptions.None)
+        public static PoseWrapper GetPoseWrapper(MethodInfo method, object instance = null, WrapperOptions options = DefaultOptions)
         {
             var methodDelegate = GetDelegateFromMethodInfo(method, instance, out Type delegateType);
             return GetPoseWrapper(methodDelegate, delegateType, options);
         }
 
-        public static PoseWrapper GetPoseWrapper(Delegate entryPoint, Type delegateType = null, WrapperOptions options = WrapperOptions.None)
+        public static PoseWrapper GetPoseWrapper(Delegate entryPoint, Type delegateType = null, WrapperOptions options = DefaultOptions)
         {
             var returnType = entryPoint.Method.ReturnType;
             var parameters = entryPoint.Method.GetParameters();
@@ -49,7 +51,7 @@ namespace Shimmy
             return new PoseWrapper(entryPoint, null, delegateType, parameters, options);
         }
 
-        public static PoseWrapper<T> GetPoseWrapper<T>(Expression<Action> expression, WrapperOptions options = WrapperOptions.None)
+        public static PoseWrapper<T> GetPoseWrapper<T>(Expression<Action> expression, WrapperOptions options = DefaultOptions)
         {
             var method = (MethodInfo)MethodHelper.GetMethodFromExpression(expression.Body, false, out object instance);
             if (instance is Type)
@@ -58,13 +60,13 @@ namespace Shimmy
                 return GetPoseWrapper<T>(method, instance, options);
         }
 
-        public static PoseWrapper<T> GetPoseWrapper<T>(MethodInfo method, object instance = null, WrapperOptions options = WrapperOptions.None)
+        public static PoseWrapper<T> GetPoseWrapper<T>(MethodInfo method, object instance = null, WrapperOptions options = DefaultOptions)
         {
             var methodDelegate = GetDelegateFromMethodInfo(method, instance, out Type delegateType);
             return GetPoseWrapper<T>(methodDelegate, delegateType, options);
         }
 
-        public static PoseWrapper<T> GetPoseWrapper<T>(Delegate entryPoint, Type delegateType = null, WrapperOptions options = WrapperOptions.None)
+        public static PoseWrapper<T> GetPoseWrapper<T>(Delegate entryPoint, Type delegateType = null, WrapperOptions options = DefaultOptions)
         {
             var returnType = entryPoint.Method.ReturnType;
             if (returnType == null || returnType != typeof(T))

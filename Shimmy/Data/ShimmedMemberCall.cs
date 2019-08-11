@@ -3,12 +3,12 @@ using System.Reflection;
 
 namespace Shimmy.Data
 {
-    public class ShimmedMethodCall
+    public class ShimmedMemberCall
     {
-        public ShimmedMethodCall(object[] parameters, MethodInfo method)
+        public ShimmedMemberCall(object[] parameters, MemberInfo member)
         {
             Parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
-            Method = method ?? throw new ArgumentNullException(nameof(method));
+            Member = member ?? throw new ArgumentNullException(nameof(member));
             CalledAt = DateTime.Now;
         }
 
@@ -16,6 +16,6 @@ namespace Shimmy.Data
 
         public object[] Parameters { get; private set; }
 
-        public MethodInfo Method { get; private set; }
+        public MemberInfo Member { get; private set; }
     }
 }
