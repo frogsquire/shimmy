@@ -60,6 +60,15 @@ namespace Shimmy.Data
                 ShimAction.ReturnValue = value;
             }
         }
+
+        public bool IsPassThrough => ShimAction.IsPassThrough;
+
+        public void PassThrough(bool state)
+        {
+            ShimAction.IsPassThrough = state;
+        }
+
+        public abstract void ExecutePassThrough(object[] parameters);
     }
 
     internal abstract class ShimmedMember<T> : ShimmedMember where T : MemberInfo

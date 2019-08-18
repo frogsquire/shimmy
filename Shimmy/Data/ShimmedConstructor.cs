@@ -64,5 +64,14 @@ namespace Shimmy.Data
                 expressionParamsArray,
                 Constructor.DeclaringType);
         }
+
+        public override void ExecutePassThrough(object[] parameters)
+        {
+            if (!IsPassThrough)
+                return;
+
+            // todo: which constructor? make sure args match
+            ShimAction.ReturnValue = Activator.CreateInstance(Constructor.DeclaringType, parameters);
+        }
     }
 }

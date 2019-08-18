@@ -46,6 +46,11 @@ namespace Shimmy.Helpers
             ilGenerator.Emit(OpCodes.Ldloc, arrayLocal);
             ilGenerator.EmitCall(OpCodes.Call, typeof(ShimLibrary).GetMethod("AddCallResultToShim"), null);
 
+            // invoke the target (pass-through) if enabled
+            // (this will also update the return value if relevant)
+            ilGenerator.Emit(OpCodes.Ldloc, arrayLocal); // todo: necessary to do this again?
+            ilGenerator.EmitCall(OpCodes.Call, typeof(ShimLibrary).GetMethod("InvokePassThroughIfSet"), null);
+
             // return - with default return value if necessary
             // provided via a call so the stack will accomodate it
             if (returnType == null)

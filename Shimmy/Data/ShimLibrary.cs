@@ -17,6 +17,7 @@ namespace Shimmy.Data
     {
         public const string CannotGetReturnValueNoMethodRunningError = "Cannot get return value for method - no shim is running.";
         public const string CannotGetReturnValueNonMatchingTypeError = "Cannot get return value for method - specified return type does not match return type of shim.";
+        public const string CannotInvokePassThroughNoMethodRunningError = "Cannot perform pass-through - no shim is running.";
 
         private static Dictionary<Guid, ShimmedMember> _library = new Dictionary<Guid, ShimmedMember>();
         private static ShimmedMember _currentRunningMember; 
@@ -52,22 +53,27 @@ namespace Shimmy.Data
         public static T GetReturnValueAndClearRunningMethod<T>()
         {
             if (_currentRunningMember == null)
-            {
-                throw new InvalidOperationException(CannotGetReturnValueNoMethodRunningError);
-            }
+                throw new InvalidOperationException(CannotGetReturnValueNoMethodRunningError);            
 
             var runningMemberGenerics = _currentRunningMember.GetType().GetGenericArguments();
             
             if (runningMemberGenerics == null || runningMemberGenerics.Length == 0 || runningMemberGenerics[0] != typeof(T))
-            {
-                throw new InvalidOperationException(CannotGetReturnValueNonMatchingTypeError);
-            }
+                throw new InvalidOperationException(CannotGetReturnValueNonMatchingTypeError);            
 
             T returnValue = (T)_currentRunningMember.ReturnValue;
 
             ClearRunningMethod();
 
             return returnValue;
+        }
+
+        public static void InvokePassThroughIfSet(object[] parameters)
+        {
+            if (_currentRunningMember == null)
+                throw new InvalidOperationException(CannotInvokePassThroughNoMethodRunningError);
+
+            if (_currentRunningMember.IsPassThrough)
+                _currentRunningMember.ExecutePassThrough(parameters);
         }
     }
 }

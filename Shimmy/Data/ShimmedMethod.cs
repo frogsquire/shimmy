@@ -80,6 +80,17 @@ namespace Shimmy.Data
             var parameters = Method.GetParameters();
             return GetExpressionParametersFromParameterInfo(parameters);
         }
+
+        public override void ExecutePassThrough(object[] parameters)
+        {
+            // todo: parameters in passthrough
+            // todo: instance members
+
+            if (!IsPassThrough)
+                return;
+
+            Method.Invoke(null, parameters);
+        }
     }
 
     internal class ShimmedMethod<T> : ShimmedMethod
@@ -115,6 +126,14 @@ namespace Shimmy.Data
         {
             AddCallResult();
             return (T)ShimAction.ReturnValue;
+        }
+
+        public override void ExecutePassThrough(object[] parameters)
+        {
+            if (!IsPassThrough)
+                return;
+
+            ShimAction.ReturnValue = (T)Method.Invoke(null, parameters);
         }
     }
 }
